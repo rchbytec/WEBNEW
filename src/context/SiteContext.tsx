@@ -397,38 +397,6 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let isMounted = true;
 
-    // Helper to merge server logs with local state without losing items
-    const mergeLogs = (serverLogs: VisitorLog[], localLogs: VisitorLog[]): VisitorLog[] => {
-      const mergedMap = new Map<string, VisitorLog>();
-
-      // Server logs first
-      serverLogs.forEach(log => {
-        mergedMap.set(log.visitor_id || log.id, log);
-      });
-
-      // Overlay local logs if newer
-      localLogs.forEach(localLog => {
-        const id = localLog.visitor_id || localLog.id;
-        if (!mergedMap.has(id)) {
-          mergedMap.set(id, localLog);
-        } else {
-          const existing = mergedMap.get(id)!;
-          if (new Date(localLog.timestamp) > new Date(existing.timestamp)) {
-            mergedMap.set(id, {
-              ...existing,
-              timestamp: localLog.timestamp,
-              visitedSection: localLog.visitedSection,
-              visitHistory: localLog.visitHistory || existing.visitHistory
-            });
-          }
-        }
-      });
-
-      return Array.from(mergedMap.values()).sort((a, b) => 
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-    };
-
     const fetchVisitorLogsFromServer = async () => {
       try {
         const res = await fetch('/api/visitors');
@@ -436,13 +404,10 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await res.json();
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
-              setVisitorLogs(prev => {
-                const combined = mergeLogs(data.visitorLogs, prev);
-                try {
-                  localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(combined));
-                } catch (e) {}
-                return combined;
-              });
+              setVisitorLogs(data.visitorLogs);
+              try {
+                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+              } catch (e) {}
             }
           }
         }
@@ -466,7 +431,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         second: '2-digit'
       });
 
-      // 1. Immediate local state update so it shows instantly in Admin Panel
+      // 1. Immediate local state update so it shows instantly in Admin Panel on current device
       setVisitorLogs(prev => {
         const existingIdx = prev.findIndex(l => l.visitor_id === vid || l.id === vid);
         if (existingIdx !== -1) {
@@ -509,11 +474,14 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
-      // 2. Register on server
+      // 2. Register on server and receive updated master logs
       try {
         const res = await fetch('/api/visitors/register', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-visitor-id': vid
+          },
           body: JSON.stringify({
             visitor_id: vid,
             visitedSection: currentSection,
@@ -526,13 +494,10 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await res.json();
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
-              setVisitorLogs(prev => {
-                const combined = mergeLogs(data.visitorLogs, prev);
-                try {
-                  localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(combined));
-                } catch (e) {}
-                return combined;
-              });
+              setVisitorLogs(data.visitorLogs);
+              try {
+                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+              } catch (e) {}
             }
           }
         }

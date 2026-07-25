@@ -84,16 +84,21 @@ const parseDeviceInfo = (ua: string, screenWidth?: number) => {
 // Helper: Get Geolocation string from IP
 const ipGeoCache = new Map<string, string>();
 const fetchLocationForIp = async (ip: string): Promise<string> => {
+  if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+    return 'Buenos Aires, CF, AR';
+  }
+
   if (ipGeoCache.has(ip)) {
     return ipGeoCache.get(ip)!;
   }
 
-  if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-    return 'Buenos Aires, CF, AR';
-  }
-
   try {
-    const res = await fetch(`https://ipwho.is/${ip}`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
+
+    const res = await fetch(`https://ipwho.is/${ip}`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
     if (res.ok) {
       const data = await res.json();
       if (data && data.success !== false) {
@@ -112,21 +117,31 @@ const fetchLocationForIp = async (ip: string): Promise<string> => {
       }
     }
   } catch (e) {
-    // silent catch
+    // silent catch on timeout or network error
   }
 
-  return 'Argentina';
+  const fallback = 'Argentina';
+  ipGeoCache.set(ip, fallback);
+  return fallback;
 };
 
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
 
-  // API Routes
-  app.use('/api/visitors', (_req, res, next) => {
+  // CORS and Cache Control Middleware
+  app.use('/api', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-visitor-id, Authorization');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
+
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+      return;
+    }
     next();
   });
 
@@ -144,8 +159,9 @@ async function startServer() {
     try {
       const { visitor_id, visitedSection, userAgent, locationOverride, screenWidth } = req.body || {};
       
-      // Extract visitor_id from body or cookie
-      let vid = visitor_id;
+      // Extract visitor_id from body, query, header, or cookie
+      let vid = visitor_id || (req.query.visitor_id as string) || (req.headers['x-visitor-id'] as string);
+      
       if (!vid && req.headers.cookie) {
         const match = req.headers.cookie.match(/(?:^|; )rbt_vid=([^;]*)/);
         if (match && match[1]) {
@@ -263,6 +279,7 @@ async function startServer() {
       }
 
       saveVisitorsToFile();
+      console.log(`[VISITOR LOGGED] ${vid} (${deviceType}) IP: ${clientIp} Location: ${location}`);
 
       res.json({ success: true, visitorLogs: serverVisitorLogs });
     } catch (err) {
