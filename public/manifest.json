@@ -1,0 +1,17 @@
+{
+  "short_name": "RCH-BYTEC",
+  "name": "RCH-BYTEC - Servicios Informáticos y de Seguridad",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512 192x192 64x64 32x32"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Servicios informáticos, energía solar, cámaras de seguridad, alarmas y servicio técnico especializado."
+}

@@ -1,0 +1,1414 @@
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useSiteContext } from '../context/SiteContext';
+import { sendAdminEmail } from '../utils/emailNotifier';
+import { HeroSlide, BannerOffer, ServiceItem } from '../types';
+import { 
+  X, 
+  Save, 
+  RefreshCw, 
+  LogOut, 
+  LayoutDashboard, 
+  Sliders, 
+  Layers, 
+  Briefcase, 
+  Phone, 
+  Shield, 
+  Plus, 
+  Trash2, 
+  Check, 
+  Key, 
+  Mail, 
+  Globe, 
+  MessageSquare,
+  Sparkles,
+  Info,
+  Lock,
+  Cpu,
+  Lightbulb,
+  Sun,
+  Moon,
+  Droplets,
+  Wind,
+  DoorClosed,
+  Power
+} from 'lucide-react';
+
+interface AdminControlPanelProps {
+  darkMode: boolean;
+}
+
+export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }) => {
+  const {
+    isAdminPanelOpen,
+    setIsAdminPanelOpen,
+    setIsAdminLoggedIn,
+    siteData,
+    setSiteData,
+    resetToDefaults,
+    setNotificationMsg,
+  } = useSiteContext();
+
+  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'socials' | 'admin'>('general');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+
+  // Local draft state initialized from siteData
+  const [formData, setFormData] = useState(siteData);
+
+  // When panel opens, sync local draft
+  React.useEffect(() => {
+    setFormData(siteData);
+  }, [siteData, isAdminPanelOpen]);
+
+  if (!isAdminPanelOpen) return null;
+
+  const handleSaveAll = () => {
+    setSiteData(formData);
+    setSaveSuccess(true);
+    setNotificationMsg('¡Todos los cambios del sitio web han sido guardados con éxito!');
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  const handleSaveAdminCredentials = async () => {
+    const newEmail = formData.adminCredentials.email.trim();
+    const newPassword = formData.adminCredentials.password.trim();
+
+    if (!newEmail || !newPassword) {
+      alert('Por favor complete el email y la nueva contraseña.');
+      return;
+    }
+
+    setEmailSending(true);
+    setSiteData(formData);
+
+    const message = `Estimado Administrador de RCH-BYTEC,\n\nSe han actualizado correctamente sus credenciales de acceso al Panel de Control de la página web.\n\nNuevas credenciales:\n- Email: ${newEmail}\n- Contraseña Elegida: ${newPassword}\n\nGuarde estas credenciales en un lugar seguro. Si no realizó este cambio, contacte al soporte técnico de inmediato.`;
+
+    const res = await sendAdminEmail({
+      toEmail: newEmail,
+      subject: 'Actualización de Credenciales Admin - RCH-BYTEC',
+      message,
+    });
+
+    setEmailSending(false);
+    setSaveSuccess(true);
+    setNotificationMsg(`Credenciales guardadas. ${res.message}`);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          className={`w-full max-w-6xl h-[92vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden ${
+            darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+          }`}
+        >
+          {/* Top Bar */}
+          <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 ${
+            darkMode ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-200 bg-zinc-50'
+          }`}>
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-500/20">
+                <LayoutDashboard className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-black tracking-tight">Panel de Control RCH-BYTEC</h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    Modo Edición Total
+                  </span>
+                </div>
+                <p className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                  Modifique textos, contactos, banners, servicios, enlaces y credenciales de acceso.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveAll}
+                className="px-4 py-2 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
+              >
+                {saveSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                <span>{saveSuccess ? '¡Guardado!' : 'Guardar Todo'}</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  if (confirm('¿Desea cerrar la sesión de Administrador?')) {
+                    setIsAdminLoggedIn(false);
+                    setIsAdminPanelOpen(false);
+                  }
+                }}
+                className={`p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 ${
+                  darkMode ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                }`}
+                title="Cerrar sesión"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={() => setIsAdminPanelOpen(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  darkMode ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Layout: Tabs Left + Content Right */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* Sidebar Tabs */}
+            <div className={`w-56 shrink-0 border-r p-3 space-y-1 overflow-y-auto ${
+              darkMode ? 'border-zinc-800 bg-zinc-900/30' : 'border-zinc-200 bg-zinc-50/50'
+            }`}>
+              <button
+                onClick={() => setActiveTab('general')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'general'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Phone className="w-4 h-4" />
+                <span>Contacto & Datos</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('header')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'header'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Globe className="w-4 h-4" />
+                <span>Header y Menú</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('hero')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'hero'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Sliders className="w-4 h-4" />
+                <span>Carrusel Hero</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('quick')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'quick'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>Ofertas Rápidas</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('services')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'services'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Briefcase className="w-4 h-4" />
+                <span>Servicios ({formData.servicesList.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('simulator')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'simulator'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Cpu className="w-4 h-4 text-emerald-400" />
+                <span>Simulador / Demo</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('socials')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'socials'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Redes Sociales</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('admin')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                  activeTab === 'admin'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                <span>Credenciales Admin</span>
+              </button>
+
+              <div className="pt-4 border-t border-zinc-800/50">
+                <button
+                  onClick={() => {
+                    if (confirm('¿Esta seguro de restaurar todos los textos y datos originales del sitio?')) {
+                      resetToDefaults();
+                      setFormData(siteData);
+                      setNotificationMsg('Se han restaurado los datos por defecto.');
+                    }
+                  }}
+                  className={`w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-colors flex items-center gap-2 ${
+                    darkMode ? 'border-zinc-800 text-red-400 hover:bg-red-500/10' : 'border-zinc-200 text-red-600 hover:bg-red-50'
+                  }`}
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Restaurar Fábrica</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Panel Tab Content */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              
+              {/* TAB 1: CONTACTO Y DATOS */}
+              {activeTab === 'general' && (
+                <div className="space-y-6 max-w-3xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg">Información General & Contacto</h3>
+                    <p className="text-xs text-zinc-400">Edite los teléfonos, slogan, cupón y mapa.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Nombre Comercial</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.name}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, name: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Razón Social</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.fullName}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, fullName: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Slogan Principal</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.slogan}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, slogan: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Subtítulo Corporativo</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.subtitle}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, subtitle: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Teléfono Neuquén (Visible)</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.phoneNeuquen}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({
+                            ...formData,
+                            companyInfo: { 
+                              ...formData.companyInfo, 
+                              phoneNeuquen: val,
+                              phoneNeuquenClean: val.replace(/\D/g, '')
+                            }
+                          });
+                        }}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Teléfono Buenos Aires (Visible)</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.phoneBsAs}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({
+                            ...formData,
+                            companyInfo: { 
+                              ...formData.companyInfo, 
+                              phoneBsAs: val,
+                              phoneBsAsClean: val.replace(/\D/g, '')
+                            }
+                          });
+                        }}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Correo Electrónico de Contacto</label>
+                      <input
+                        type="email"
+                        value={formData.companyInfo.email}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, email: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Ubicación Geográfica Texto</label>
+                      <input
+                        type="text"
+                        value={formData.companyInfo.location}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, location: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <label className="block text-xs font-semibold mb-1">URL de Google Maps Embed</label>
+                    <input
+                      type="text"
+                      value={formData.companyInfo.mapEmbedUrl}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        companyInfo: { ...formData.companyInfo, mapEmbedUrl: e.target.value }
+                      })}
+                      className={`w-full px-3.5 py-2 rounded-lg border text-sm font-mono text-xs ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                    />
+                  </div>
+
+                  <div className="border-t border-zinc-800/40 pt-4 space-y-3">
+                    <h4 className="font-bold text-sm">Configuración del Cupón Especial</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Código de Cupón</label>
+                        <input
+                          type="text"
+                          value={formData.companyInfo.couponCode}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            companyInfo: { ...formData.companyInfo, couponCode: e.target.value }
+                          })}
+                          className={`w-full px-3.5 py-2 rounded-lg border text-sm font-mono ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Título / Beneficio</label>
+                        <input
+                          type="text"
+                          value={formData.companyInfo.couponDiscount}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            companyInfo: { ...formData.companyInfo, couponDiscount: e.target.value }
+                          })}
+                          className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Descripción del Cupón</label>
+                      <textarea
+                        rows={2}
+                        value={formData.companyInfo.couponDescription}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          companyInfo: { ...formData.companyInfo, couponDescription: e.target.value }
+                        })}
+                        className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: HEADER Y LINKS */}
+              {activeTab === 'header' && (
+                <div className="space-y-6 max-w-3xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg">Navegación del Header</h3>
+                    <p className="text-xs text-zinc-400">Personalice los nombres visibles del menú de navegación superior.</p>
+                  </div>
+
+                  {/* Informative Banner */}
+                  <div className={`p-4 rounded-xl border text-xs leading-relaxed flex items-start gap-3 ${
+                    darkMode ? 'bg-zinc-900/80 border-zinc-800 text-zinc-300' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                  }`}>
+                    <Info className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p><strong className="text-emerald-400">Nombre del Enlace (Editable):</strong> Puedes editar libremente el texto visible que ven los usuarios (ej. cambiar "Inicio" por "Portada", "Servicios" por "Nuestras Soluciones").</p>
+                      <p><strong className="text-zinc-400">Destino de Sección (Solo Lectura):</strong> La variable de ancla (ej. <code className="text-emerald-400">#inicio</code>, <code className="text-emerald-400">#servicios</code>) está bloqueada en modo solo lectura para garantizar que los botones siempre desplacen correctamente a sus respectivas secciones.</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-12 gap-3 text-xs font-semibold px-1 text-zinc-400">
+                      <div className="col-span-1">#</div>
+                      <div className="col-span-6">Nombre Visible (Editable)</div>
+                      <div className="col-span-5">Ancla Técnica de Sección (Fija / Solo Lectura)</div>
+                    </div>
+
+                    {formData.headerLinks.map((link, idx) => (
+                      <div key={link.id} className={`p-3 rounded-xl border grid grid-cols-12 items-center gap-3 ${
+                        darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                      }`}>
+                        <div className="col-span-1 text-xs font-mono font-bold text-zinc-500">#{idx + 1}</div>
+                        
+                        {/* Editable Name */}
+                        <div className="col-span-6">
+                          <input
+                            type="text"
+                            value={link.name}
+                            onChange={(e) => {
+                              const newLinks = [...formData.headerLinks];
+                              newLinks[idx].name = e.target.value;
+                              setFormData({ ...formData, headerLinks: newLinks });
+                            }}
+                            placeholder="Nombre del enlace"
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-semibold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-emerald-500/50' : 'bg-white border-zinc-300 text-zinc-900'
+                            }`}
+                          />
+                        </div>
+
+                        {/* Read-Only Technical Href */}
+                        <div className="col-span-5 flex items-center gap-2">
+                          <div className={`flex-1 px-3 py-1.5 rounded-lg border text-xs font-mono flex items-center justify-between opacity-80 ${
+                            darkMode ? 'bg-zinc-950/80 border-zinc-800/80 text-zinc-400' : 'bg-zinc-200/80 border-zinc-300 text-zinc-600'
+                          }`} title="Variable de ancla fija (Solo Lectura)">
+                            <span>{link.href}</span>
+                            <Lock className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: HERO SLIDES */}
+              {activeTab === 'hero' && (
+                <div className="space-y-6 max-w-4xl">
+                  <div className="border-b border-zinc-800/40 pb-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg">Carrusel Hero Banner ({formData.heroSlides.length} Slides)</h3>
+                      <p className="text-xs text-zinc-400">Modifique títulos, descripciones e imágenes del banner principal.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newSlide: HeroSlide = {
+                          id: `slide-${Date.now()}`,
+                          title: 'Nuevo Servicio Técnico',
+                          subtitle: 'Especialistas Certificados',
+                          description: 'Descripción del nuevo servicio ofrecido por RCH-BYTEC.',
+                          badge: 'Nuevo',
+                          ctaText: 'Consultar Ahora',
+                          ctaCategory: 'repair',
+                          imageBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95))',
+                          imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+                        };
+                        setFormData({ ...formData, heroSlides: [...formData.heroSlides, newSlide] });
+                      }}
+                      className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Agregar Slide</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-6">
+                    {formData.heroSlides.map((slide, idx) => (
+                      <div key={slide.id} className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
+                        darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                      }`}>
+                        <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
+                          <span className="font-mono text-xs font-bold text-emerald-500">Slide #{idx + 1} ({slide.id})</span>
+                          <button
+                            onClick={() => {
+                              if (formData.heroSlides.length <= 1) {
+                                alert('Debe haber al menos 1 slide en el carrusel.');
+                                return;
+                              }
+                              const updated = formData.heroSlides.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, heroSlides: updated });
+                            }}
+                            className="p-1 rounded text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Título del Slide</label>
+                            <input
+                              type="text"
+                              value={slide.title}
+                              onChange={(e) => {
+                                const updated = [...formData.heroSlides];
+                                updated[idx].title = e.target.value;
+                                setFormData({ ...formData, heroSlides: updated });
+                              }}
+                              className={`w-full px-3 py-1.5 rounded-lg border text-xs font-bold ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Subtítulo</label>
+                            <input
+                              type="text"
+                              value={slide.subtitle}
+                              onChange={(e) => {
+                                const updated = [...formData.heroSlides];
+                                updated[idx].subtitle = e.target.value;
+                                setFormData({ ...formData, heroSlides: updated });
+                              }}
+                              className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Etiqueta / Badge</label>
+                            <input
+                              type="text"
+                              value={slide.badge}
+                              onChange={(e) => {
+                                const updated = [...formData.heroSlides];
+                                updated[idx].badge = e.target.value;
+                                setFormData({ ...formData, heroSlides: updated });
+                              }}
+                              className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Texto Botón CTA</label>
+                            <input
+                              type="text"
+                              value={slide.ctaText}
+                              onChange={(e) => {
+                                const updated = [...formData.heroSlides];
+                                updated[idx].ctaText = e.target.value;
+                                setFormData({ ...formData, heroSlides: updated });
+                              }}
+                              className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Descripción del Servicio</label>
+                          <textarea
+                            rows={2}
+                            value={slide.description}
+                            onChange={(e) => {
+                              const updated = [...formData.heroSlides];
+                              updated[idx].description = e.target.value;
+                              setFormData({ ...formData, heroSlides: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">URL de la Imagen</label>
+                          <input
+                            type="text"
+                            value={slide.imageUrl}
+                            onChange={(e) => {
+                              const updated = [...formData.heroSlides];
+                              updated[idx].imageUrl = e.target.value;
+                              setFormData({ ...formData, heroSlides: updated });
+                            }}
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: QUICK OFFERS */}
+              {activeTab === 'quick' && (
+                <div className="space-y-6 max-w-3xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg">Banners de Ofertas Rápidas</h3>
+                    <p className="text-xs text-zinc-400">Modifique las tarjetas de oferta debajo del Hero.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    {formData.quickBanners.map((banner, idx) => (
+                      <div key={banner.id} className={`p-4 rounded-xl border space-y-2 ${
+                        darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                      }`}>
+                        <div className="font-mono text-xs font-bold text-emerald-500">Banner #{idx + 1}</div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <input
+                            type="text"
+                            value={banner.title}
+                            onChange={(e) => {
+                              const updated = [...formData.quickBanners];
+                              updated[idx].title = e.target.value;
+                              setFormData({ ...formData, quickBanners: updated });
+                            }}
+                            placeholder="Título"
+                            className={`px-3 py-1.5 rounded-lg border text-xs font-bold ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                          />
+                          <input
+                            type="text"
+                            value={banner.tagline}
+                            onChange={(e) => {
+                              const updated = [...formData.quickBanners];
+                              updated[idx].tagline = e.target.value;
+                              setFormData({ ...formData, quickBanners: updated });
+                            }}
+                            placeholder="Eslogan"
+                            className={`px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                          />
+                        </div>
+                        <textarea
+                          rows={2}
+                          value={banner.description}
+                          onChange={(e) => {
+                            const updated = [...formData.quickBanners];
+                            updated[idx].description = e.target.value;
+                            setFormData({ ...formData, quickBanners: updated });
+                          }}
+                          placeholder="Descripción"
+                          className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 5: SERVICIOS */}
+              {activeTab === 'services' && (
+                <div className="space-y-6 max-w-4xl">
+                  <div className="border-b border-zinc-800/40 pb-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg">Catálogo de Servicios ({formData.servicesList.length})</h3>
+                      <p className="text-xs text-zinc-400">Agregue, edite o elimine servicios ofrecidos.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const newServ: ServiceItem = {
+                          id: `s-${Date.now()}`,
+                          title: 'Nuevo Servicio Técnico Especializado',
+                          description: 'Descripción detallada de la prestación técnica.',
+                          category: 'repair',
+                          icon: 'Cpu',
+                          highlighted: false
+                        };
+                        setFormData({ ...formData, servicesList: [...formData.servicesList, newServ] });
+                      }}
+                      className="px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Agregar Servicio</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {formData.servicesList.map((serv, idx) => (
+                      <div key={serv.id} className={`p-4 rounded-xl border space-y-2 relative ${
+                        darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold text-emerald-500">#{idx + 1} - {serv.category}</span>
+                          <button
+                            onClick={() => {
+                              const updated = formData.servicesList.filter((_, i) => i !== idx);
+                              setFormData({ ...formData, servicesList: updated });
+                            }}
+                            className="p-1 rounded text-red-400 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+
+                        <input
+                          type="text"
+                          value={serv.title}
+                          onChange={(e) => {
+                            const updated = [...formData.servicesList];
+                            updated[idx].title = e.target.value;
+                            setFormData({ ...formData, servicesList: updated });
+                          }}
+                          className={`w-full px-3 py-1.5 rounded-lg border text-xs font-bold ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                        />
+
+                        <textarea
+                          rows={3}
+                          value={serv.description}
+                          onChange={(e) => {
+                            const updated = [...formData.servicesList];
+                            updated[idx].description = e.target.value;
+                            setFormData({ ...formData, servicesList: updated });
+                          }}
+                          className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                        />
+
+                        <div className="flex items-center justify-between text-xs pt-1">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={serv.highlighted || false}
+                              onChange={(e) => {
+                                const updated = [...formData.servicesList];
+                                updated[idx].highlighted = e.target.checked;
+                                setFormData({ ...formData, servicesList: updated });
+                              }}
+                              className="rounded border-zinc-700 text-emerald-500 focus:ring-0"
+                            />
+                            <span className="text-[11px] font-semibold">Destacado</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB FOR SIMULADOR */}
+              {activeTab === 'simulator' && (
+                <div className="space-y-6 max-w-4xl">
+                  <div className="border-b border-zinc-800/40 pb-3 flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Cpu className="w-5 h-5 text-emerald-500" />
+                        <span>Configuración del Simulador Domótico</span>
+                      </h3>
+                      <p className="text-xs text-zinc-400">
+                        Personalice los títulos, textos, llamado a la acción y el estado inicial en que aparecen las luces, cortinas, riego, aire y alarmas cuando un visitante abre la demo.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 1: TÍTULOS Y TEXTOS */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-sm text-emerald-500 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4" />
+                      <span>Textos y Encabezados del Simulador</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Insignia / Badge Superior</label>
+                        <input
+                          type="text"
+                          value={formData.simulatorConfig.badge}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            simulatorConfig: { ...formData.simulatorConfig, badge: e.target.value }
+                          })}
+                          placeholder="DEMO INTERACTIVA EN VIVO"
+                          className={`w-full px-3.5 py-2 rounded-lg border text-xs font-medium ${
+                            darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Título Principal de la Sección</label>
+                        <input
+                          type="text"
+                          value={formData.simulatorConfig.title}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            simulatorConfig: { ...formData.simulatorConfig, title: e.target.value }
+                          })}
+                          placeholder="Simulación Domótica"
+                          className={`w-full px-3.5 py-2 rounded-lg border text-xs font-bold ${
+                            darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Subtítulo / Descripción Bajada</label>
+                      <textarea
+                        rows={2}
+                        value={formData.simulatorConfig.description}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          simulatorConfig: { ...formData.simulatorConfig, description: e.target.value }
+                        })}
+                        placeholder="Pruébelo usted mismo: controle la iluminación, cortinas..."
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Mensaje Inicial en la Terminal de Eventos</label>
+                      <input
+                        type="text"
+                        value={formData.simulatorConfig.initialLogText}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          simulatorConfig: { ...formData.simulatorConfig, initialLogText: e.target.value }
+                        })}
+                        placeholder="Sistema RBT OS Domótica iniciado en línea."
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs font-mono ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 2: ESTADOS INICIALES */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-sm text-emerald-500 flex items-center gap-2">
+                      <Sliders className="w-4 h-4" />
+                      <span>Estado Inicial de Dispositivos (Al Cargar por Primera Vez)</span>
+                    </h4>
+
+                    {/* Grid Iluminación y Cortinas */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Iluminación */}
+                      <div className={`p-3 rounded-lg border space-y-3 ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <Lightbulb className="w-4 h-4 text-amber-400" />
+                            <span>Iluminación Dimerizable</span>
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.simulatorConfig.initialLightsOn}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                simulatorConfig: { ...formData.simulatorConfig, initialLightsOn: e.target.checked }
+                              })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </label>
+                        </div>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-medium">
+                            <span>Brillo Inicial:</span>
+                            <span className="font-mono text-amber-400 font-bold">{formData.simulatorConfig.initialLightBrightness}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="10"
+                            max="100"
+                            value={formData.simulatorConfig.initialLightBrightness}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              simulatorConfig: { ...formData.simulatorConfig, initialLightBrightness: Number(e.target.value) }
+                            })}
+                            className="w-full accent-emerald-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Tono Inicial de Luz</label>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            {(['warm', 'neutral', 'cool'] as const).map((colorMode) => (
+                              <button
+                                key={colorMode}
+                                type="button"
+                                onClick={() => setFormData({
+                                  ...formData,
+                                  simulatorConfig: { ...formData.simulatorConfig, initialLightColor: colorMode }
+                                })}
+                                className={`py-1 rounded text-[10px] font-bold border capitalize transition-all cursor-pointer ${
+                                  formData.simulatorConfig.initialLightColor === colorMode
+                                    ? 'bg-emerald-500 text-white border-emerald-400'
+                                    : darkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                                }`}
+                              >
+                                {colorMode === 'warm' ? '☀️ Cálida' : colorMode === 'neutral' ? '⚖️ Neutra' : '❄️ Fría'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cortinas Motorizadas */}
+                      <div className={`p-3 rounded-lg border space-y-3 ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <span className="font-bold text-xs flex items-center gap-1.5">
+                          <DoorClosed className="w-4 h-4 text-purple-400" />
+                          <span>Cortinas Roller Motorizadas</span>
+                        </span>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] font-medium">
+                            <span>Apertura Inicial:</span>
+                            <span className="font-mono text-purple-400 font-bold">{formData.simulatorConfig.initialCurtainsOpen}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={formData.simulatorConfig.initialCurtainsOpen}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              simulatorConfig: { ...formData.simulatorConfig, initialCurtainsOpen: Number(e.target.value) }
+                            })}
+                            className="w-full accent-purple-500 h-1.5 bg-zinc-800 rounded-lg cursor-pointer"
+                          />
+                        </div>
+                        <p className="text-[10px] text-zinc-400">
+                          0% es totalmente cerrada, 100% es totalmente abierta.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Grid Riego/Bomba y Climatización */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Bomba de Agua */}
+                      <div className={`p-3 rounded-lg border space-y-3 ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <Droplets className="w-4 h-4 text-cyan-400" />
+                            <span>Bomba de Agua & Riego GSM</span>
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.simulatorConfig.initialWaterPumpOn}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                simulatorConfig: { ...formData.simulatorConfig, initialWaterPumpOn: e.target.checked }
+                              })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </label>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Presión de Trabajo (BAR)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0.5"
+                            max="6.0"
+                            value={formData.simulatorConfig.initialWaterPressure}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              simulatorConfig: { ...formData.simulatorConfig, initialWaterPressure: Number(e.target.value) }
+                            })}
+                            className={`w-full px-3 py-1.5 rounded border text-xs font-mono ${
+                              darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'
+                            }`}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Climatización (AC) */}
+                      <div className={`p-3 rounded-lg border space-y-3 ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-xs flex items-center gap-1.5">
+                            <Wind className="w-4 h-4 text-sky-400" />
+                            <span>Climatización (Aire Ac.)</span>
+                          </span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={formData.simulatorConfig.initialAcOn}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                simulatorConfig: { ...formData.simulatorConfig, initialAcOn: e.target.checked }
+                              })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Temperatura (°C)</label>
+                            <input
+                              type="number"
+                              min="16"
+                              max="30"
+                              value={formData.simulatorConfig.initialAcTemp}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                simulatorConfig: { ...formData.simulatorConfig, initialAcTemp: Number(e.target.value) }
+                              })}
+                              className={`w-full px-3 py-1.5 rounded border text-xs font-mono ${
+                                darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'
+                              }`}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold mb-1">Modo Inicial</label>
+                            <select
+                              value={formData.simulatorConfig.initialAcMode}
+                              onChange={(e) => setFormData({
+                                ...formData,
+                                simulatorConfig: { ...formData.simulatorConfig, initialAcMode: e.target.value as 'cool' | 'heat' | 'eco' }
+                              })}
+                              className={`w-full px-2 py-1.5 rounded border text-xs ${
+                                darkMode ? 'bg-zinc-900 border-zinc-800 text-white' : 'bg-zinc-50 border-zinc-300 text-zinc-900'
+                              }`}
+                            >
+                              <option value="cool">❄️ Frío</option>
+                              <option value="heat">🔥 Calor</option>
+                              <option value="eco">🌱 ECO</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Grid Alarmas y Portón */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Alarma */}
+                      <div className={`p-3 rounded-lg border space-y-2 flex items-center justify-between ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <div>
+                          <span className="font-bold text-xs block">Alarma Perimetral</span>
+                          <span className="text-[10px] text-zinc-400">Armar o desarmar por defecto al iniciar</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.simulatorConfig.initialAlarmArmed}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              simulatorConfig: { ...formData.simulatorConfig, initialAlarmArmed: e.target.checked }
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+
+                      {/* Portón Automático */}
+                      <div className={`p-3 rounded-lg border space-y-2 flex items-center justify-between ${
+                        darkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-zinc-200'
+                      }`}>
+                        <div>
+                          <span className="font-bold text-xs block">Portón Vehicular</span>
+                          <span className="text-[10px] text-zinc-400">Abierto o cerrado por defecto al iniciar</span>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.simulatorConfig.initialGateOpen}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              simulatorConfig: { ...formData.simulatorConfig, initialGateOpen: e.target.checked }
+                            })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-zinc-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 3: BOTONES Y ESCENARIOS RÁPIDOS */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-sm text-emerald-500 flex items-center gap-2">
+                      <Sun className="w-4 h-4" />
+                      <span>Nombres de Escenarios y Accesos Rápidos</span>
+                    </h4>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Escenario Día</label>
+                        <input
+                          type="text"
+                          value={formData.simulatorConfig.dayScenarioLabel}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            simulatorConfig: { ...formData.simulatorConfig, dayScenarioLabel: e.target.value }
+                          })}
+                          placeholder="Escenario Día"
+                          className={`w-full px-3 py-2 rounded border text-xs font-semibold ${
+                            darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Escenario Noche</label>
+                        <input
+                          type="text"
+                          value={formData.simulatorConfig.nightScenarioLabel}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            simulatorConfig: { ...formData.simulatorConfig, nightScenarioLabel: e.target.value }
+                          })}
+                          placeholder="Escenario Noche"
+                          className={`w-full px-3 py-2 rounded border text-xs font-semibold ${
+                            darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold mb-1">Botón Bomba de Agua</label>
+                        <input
+                          type="text"
+                          value={formData.simulatorConfig.waterPumpLabel}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            simulatorConfig: { ...formData.simulatorConfig, waterPumpLabel: e.target.value }
+                          })}
+                          placeholder="Encender Riego / Bomba"
+                          className={`w-full px-3 py-2 rounded border text-xs font-semibold ${
+                            darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECCIÓN 4: TARJETA DE LLAMADO A LA ACCIÓN */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/50 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-sm text-emerald-500 flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      <span>Llamado a la Acción Inferior del Simulador</span>
+                    </h4>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Título del Llamado</label>
+                      <input
+                        type="text"
+                        value={formData.simulatorConfig.ctaTitle}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          simulatorConfig: { ...formData.simulatorConfig, ctaTitle: e.target.value }
+                        })}
+                        placeholder="¿Desea automatizar su hogar, negocio o campo...?"
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Descripción del Llamado</label>
+                      <textarea
+                        rows={2}
+                        value={formData.simulatorConfig.ctaDescription}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          simulatorConfig: { ...formData.simulatorConfig, ctaDescription: e.target.value }
+                        })}
+                        placeholder="Diseñamos instalaciones a medida de llaves GSM..."
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1">Texto del Botón</label>
+                      <input
+                        type="text"
+                        value={formData.simulatorConfig.ctaButtonText}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          simulatorConfig: { ...formData.simulatorConfig, ctaButtonText: e.target.value }
+                        })}
+                        placeholder="Solicitar Asesoramiento Técnico"
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 6: REDES SOCIALES */}
+              {activeTab === 'socials' && (
+                <div className="space-y-6 max-w-2xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg">Redes Sociales</h3>
+                    <p className="text-xs text-zinc-400">Configure los enlaces oficiales a sus redes sociales.</p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {formData.companyInfo.socials.map((soc, idx) => (
+                      <div key={soc.name} className="space-y-1">
+                        <label className="block text-xs font-semibold">{soc.name}</label>
+                        <input
+                          type="text"
+                          value={soc.url}
+                          onChange={(e) => {
+                            const newSocials = [...formData.companyInfo.socials];
+                            newSocials[idx].url = e.target.value;
+                            setFormData({
+                              ...formData,
+                              companyInfo: { ...formData.companyInfo, socials: newSocials }
+                            });
+                          }}
+                          className={`w-full px-3.5 py-2 rounded-lg border text-xs font-mono ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 7: CREDENCIALES ADMIN */}
+              {activeTab === 'admin' && (
+                <div className="space-y-6 max-w-xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg">Credenciales de Acceso Administrador</h3>
+                    <p className="text-xs text-zinc-400">Cambie el correo o clave por las que usted desee. Se enviará un correo con la confirmación.</p>
+                  </div>
+
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Nuevo Correo Electrónico Admin</span>
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.adminCredentials.email}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          adminCredentials: { ...formData.adminCredentials, email: e.target.value }
+                        })}
+                        placeholder="admin@rchbytecsrl.com.ar"
+                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
+                        <Key className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Nueva Contraseña Admin</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.adminCredentials.password}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          adminCredentials: { ...formData.adminCredentials, password: e.target.value }
+                        })}
+                        placeholder="Nueva Contraseña"
+                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        }`}
+                      />
+                    </div>
+
+                    <button
+                      onClick={handleSaveAdminCredentials}
+                      disabled={emailSending}
+                      className="w-full py-3 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20"
+                    >
+                      {emailSending ? (
+                        <span className="inline-block animate-spin font-mono">Enviando correo...</span>
+                      ) : (
+                        <>
+                          <Mail className="w-4 h-4" />
+                          <span>Guardar y Enviar Notificación por Correo</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className={`p-4 rounded-xl border text-xs space-y-2 ${
+                    darkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-300 text-zinc-600'
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-500">
+                      <Info className="w-4 h-4" />
+                      <span>Nota de Seguridad</span>
+                    </div>
+                    <p>
+                      Al hacer clic en "Guardar y Enviar Notificación por Correo", la nueva contraseña será configurada como activa y se despachará un correo electrónico formal a la nueva dirección ingresada.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};

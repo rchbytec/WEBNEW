@@ -1,0 +1,6 @@
+{
+  "name": "RCH-BYTEC - Servicios Informáticos y de Seguridad",
+  "description": "Servicios informáticos, energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
