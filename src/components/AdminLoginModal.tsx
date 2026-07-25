@@ -208,7 +208,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-lg font-bold text-sm bg-emerald-600 text-white hover:bg-emerald-500 active:scale-98 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
+                className="w-full py-3 rounded-lg font-bold text-sm bg-emerald-600 text-white hover:bg-emerald-500 active:scale-98 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer"
               >
                 {loading ? (
                   <span className="inline-block animate-spin font-mono">...</span>
@@ -275,7 +275,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {loading ? (
                     <span className="inline-block animate-spin font-mono">...</span>

@@ -30,7 +30,7 @@ export const SpecialCoupon: React.FC<SpecialCouponProps> = ({ darkMode }) => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
             {/* Left Content: Technical Expertise & Service Quality */}
             <div className="lg:col-span-7 flex flex-col items-start gap-4">
-              <span className={`text-xs font-mono font-semibold uppercase tracking-widest block flex items-center gap-1.5 ${
+              <span className={`text-xs font-mono font-semibold uppercase tracking-widest flex items-center gap-1.5 ${
                 darkMode ? 'text-zinc-400' : 'text-zinc-500'
               }`}>
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -89,7 +89,7 @@ export const SpecialCoupon: React.FC<SpecialCouponProps> = ({ darkMode }) => {
                   <span>{companyInfo.couponCode}</span>
                   <button
                     onClick={handleCopy}
-                    className={`p-1.5 rounded-md transition-colors ${
+                    className={`p-1.5 rounded-md transition-colors cursor-pointer ${
                       darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 hover:text-zinc-900'
                     }`}
                     title="Copiar código de cupón"
@@ -115,4 +115,3 @@ export const SpecialCoupon: React.FC<SpecialCouponProps> = ({ darkMode }) => {
     </section>
   );
 };
-

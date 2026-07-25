@@ -1,12 +1,3 @@
-export interface ServiceItem {
-  id: string;
-  title: string;
-  description: string;
-  category: 'solar' | 'security' | 'repair' | 'mobile' | 'network' | 'data' | 'domotics';
-  icon: string;
-  highlighted?: boolean;
-}
-
 export interface HeroSlide {
   id: string;
   title: string;
@@ -27,6 +18,35 @@ export interface BannerOffer {
   iconName: string;
 }
 
+export interface ServiceItem {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  icon: string;
+  highlighted?: boolean;
+}
+
+export interface VisitHistoryEntry {
+  timestamp: string;
+  visitedSection: string;
+}
+
+export interface VisitorLog {
+  id: string;
+  ip: string;
+  visitorToken?: string;
+  timestamp: string;
+  firstSeen?: string;
+  visitCount: number;
+  visitHistory?: VisitHistoryEntry[];
+  deviceType: 'Escritorio' | 'Móvil' | 'Tablet';
+  browser: string;
+  location: string;
+  visitedSection: string;
+  userAgent: string;
+}
+
 export interface ContactFormData {
   name: string;
   email: string;
@@ -43,18 +63,14 @@ export interface CaptchaChallenge {
 }
 
 export interface EmailJSConfig {
-  serviceId: string;
-  templateId: string;
-  publicKey: string;
+  serviceId?: string;
+  templateId?: string;
+  publicKey?: string;
 }
 
-export interface VisitorLog {
+export interface Brand {
   id: string;
-  ip: string;
-  timestamp: string;
-  deviceType: 'Escritorio' | 'Móvil' | 'Tablet';
-  browser: string;
-  location: string;
-  visitedSection: string;
-  userAgent?: string;
+  name: string;
+  category: string;
+  logoKey: string;
 }

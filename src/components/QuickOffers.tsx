@@ -109,4 +109,3 @@ export const QuickOffers: React.FC<QuickOffersProps> = ({ darkMode }) => {
     </section>
   );
 };
-

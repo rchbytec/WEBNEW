@@ -41,25 +41,6 @@ export const BrandsTicker: React.FC<BrandsTickerProps> = ({ darkMode }) => {
     }
   }, [currentIndex]);
 
-  const handlePrev = () => {
-    setIsTransitioning(true);
-    if (currentIndex === 0) {
-      setIsTransitioning(false);
-      setCurrentIndex(BRANDS.length);
-      setTimeout(() => {
-        setIsTransitioning(true);
-        setCurrentIndex(BRANDS.length - 1);
-      }, 50);
-    } else {
-      setCurrentIndex((prev) => prev - 1);
-    }
-  };
-
-  const handleNext = () => {
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
-  };
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,7 +48,7 @@ export const BrandsTicker: React.FC<BrandsTickerProps> = ({ darkMode }) => {
     if (!el) return;
 
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault(); // Prevents default page scroll when scrolling wheel over carousel
+      e.preventDefault();
       if (wheelTimeoutRef.current) return;
 
       if (e.deltaY > 0 || e.deltaX > 0) {
@@ -134,7 +115,7 @@ export const BrandsTicker: React.FC<BrandsTickerProps> = ({ darkMode }) => {
             isTransitioning ? 'transition-transform duration-500 ease-out' : ''
           }`}
           style={{
-            transform: `translateX(calc(-${currentIndex} * 216px))`, // 200px card + 16px gap
+            transform: `translateX(calc(-${currentIndex} * 216px))`,
           }}
         >
           {extendedBrands.map((brand, idx) => (

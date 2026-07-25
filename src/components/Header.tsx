@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     };
   }, []);
 
-  const handleLogoClick = (e: React.MouseEvent) => {
+  const handleLogoClick = () => {
     const now = Date.now();
     if (now - lastClickRef.current <= 2000) {
       clickCountRef.current += 1;
@@ -224,5 +224,3 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     </>
   );
 };
-
-

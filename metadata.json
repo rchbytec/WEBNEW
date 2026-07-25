@@ -1,6 +1,6 @@
 {
-  "name": "RCH-BYTEC - Servicios Informáticos y de Seguridad",
-  "description": "Servicios informáticos, energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.",
+  "name": "RCH-BYTEC SRL | Servicios Informáticos y de Seguridad",
+  "description": "Sitio web PWA 100% responsivo para RCH-BYTEC SRL con catálogo de servicios, simulador domótico, panel de administración y contacto.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

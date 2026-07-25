@@ -126,7 +126,7 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
 
           <button
             onClick={scrollToTop}
-            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold transition-all mt-2 ${
+            className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold transition-all mt-2 cursor-pointer ${
               darkMode
                 ? 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700'
                 : 'bg-white border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 shadow-sm'
@@ -141,4 +141,3 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
     </footer>
   );
 };
-

@@ -21,7 +21,6 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ logoKey, className = "h-8 
       return (
         <svg viewBox="0 0 180 50" className={className} aria-label="NVIDIA">
           <g transform="translate(6, 6)">
-            {/* NVIDIA Green Spiral Claw Logo */}
             <path d="M0,19 C0,8 10,0 22,0 C34,0 42,7 42,18 C42,27 34,35 23,35 C14,35 7,28 7,19 C7,12 12,8 18,8 C23,8 26,11 26,16 C26,20 22,23 18,23 C16,23 14,21 14,19" fill="none" stroke="#76B900" strokeWidth="5.5" strokeLinecap="round" />
             <path d="M22,38 L32,38 C39,38 42,32 42,26 L42,18" fill="none" stroke="#76B900" strokeWidth="3" strokeLinecap="round" />
           </g>
@@ -32,9 +31,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ logoKey, className = "h-8 
     case 'dell':
       return (
         <svg viewBox="0 0 160 50" className={className} aria-label="Dell">
-          {/* Circle border */}
           <circle cx="24" cy="25" r="19" fill="none" stroke="#007DB8" strokeWidth="3.5" />
-          {/* Stylized Dell text inside logo */}
           <g transform="translate(54, 8)">
             <text x="0" y="27" fontFamily="sans-serif" fontWeight="900" fontSize="26" fill="currentColor" letterSpacing="1">D</text>
             <text x="21" y="27" fontFamily="sans-serif" fontWeight="900" fontSize="26" fill="#007DB8" transform="rotate(-22 26 22)">E</text>

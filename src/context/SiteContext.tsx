@@ -91,9 +91,9 @@ const defaultSimulatorConfig: SimulatorConfig = {
   nightScenarioLabel: 'Escenario Noche',
   waterPumpLabel: 'Encender Riego / Bomba',
   initialLogText: 'Sistema RBT OS Domótica iniciado en línea.',
-  ctaTitle: '¿Desea automatizar su hogar, negocio o campo en Buenos Aires o Neuquén?',
-  ctaDescription: 'Diseñamos instalaciones a medida de llaves GSM, bombas de agua inteligentes, alarmas, cámaras y domótica centralizada.',
-  ctaButtonText: 'Solicitar Asesoramiento Técnico',
+  ctaTitle: '¿Desea automatizar su hogar, negocio o campo? Diseños a medida con garantía oficial.',
+  ctaDescription: 'Instalaciones profesionales de llaves GSM, bombas de agua y riegos inteligentes, alarmas centrales, cámaras de seguridad monitorizadas y domótica centralizada. Próximamente sistemas centrales de IA integrados.',
+  ctaButtonText: 'Solicitar Asesoramiento',
 };
 
 const defaultSiteData: SiteData = {
@@ -143,39 +143,96 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Ensure adminCredentials exists
-        if (!parsed.adminCredentials) {
-          parsed.adminCredentials = defaultAdminCredentials;
-        }
-        if (!parsed.simulatorConfig) {
-          parsed.simulatorConfig = defaultSimulatorConfig;
-        }
-        // Sanitize headerLinks, heroSlides, quickBanners, servicesList, brands
-        if (Array.isArray(parsed.headerLinks)) {
-          parsed.headerLinks = parsed.headerLinks.map((item: any, i: number) => ({
-            ...item,
-            id: item.id || `l-${i}`
-          }));
-        }
-        if (Array.isArray(parsed.heroSlides)) {
-          parsed.heroSlides = parsed.heroSlides.map((item: any, i: number) => ({
-            ...item,
-            id: item.id || `slide-${i}`
-          }));
-        }
-        if (Array.isArray(parsed.quickBanners)) {
-          parsed.quickBanners = parsed.quickBanners.map((item: any, i: number) => ({
-            ...item,
-            id: item.id || `banner-${i}`
-          }));
-        }
-        if (Array.isArray(parsed.servicesList)) {
-          parsed.servicesList = parsed.servicesList.map((item: any, i: number) => ({
-            ...item,
-            id: item.id || `serv-${i}`
-          }));
-        }
-        return parsed;
+        const merged: SiteData = {
+          ...defaultSiteData,
+          ...parsed,
+          companyInfo: {
+            ...defaultSiteData.companyInfo,
+            ...(parsed.companyInfo || {}),
+            socials: Array.isArray(parsed?.companyInfo?.socials) ? parsed.companyInfo.socials : defaultSiteData.companyInfo.socials
+          },
+          adminCredentials: {
+            ...defaultSiteData.adminCredentials,
+            ...(parsed.adminCredentials || {})
+          },
+          simulatorConfig: {
+            ...defaultSiteData.simulatorConfig,
+            ...(parsed.simulatorConfig || {}),
+            ctaTitle: '¿Desea automatizar su hogar, negocio o campo? Diseños a medida con garantía oficial.',
+            ctaDescription: 'Instalaciones profesionales de llaves GSM, bombas de agua y riegos inteligentes, alarmas centrales, cámaras de seguridad monitorizadas y domótica centralizada. Próximamente sistemas centrales de IA integrados.',
+            ctaButtonText: 'Solicitar Asesoramiento'
+          },
+          headerLinks: Array.isArray(parsed?.headerLinks) ? parsed.headerLinks : defaultSiteData.headerLinks,
+          heroSlides: Array.isArray(parsed?.heroSlides) ? parsed.heroSlides : defaultSiteData.heroSlides,
+          quickBanners: Array.isArray(parsed?.quickBanners) ? parsed.quickBanners : defaultSiteData.quickBanners,
+          servicesList: Array.isArray(parsed?.servicesList) ? parsed.servicesList : defaultSiteData.servicesList,
+          brands: Array.isArray(parsed?.brands) ? parsed.brands : defaultSiteData.brands
+        };
+
+        // Ensure unique IDs
+        const seenLinks = new Set<string>();
+        merged.headerLinks = merged.headerLinks.map((item: any, i: number) => {
+          let uniqueId = item.id;
+          if (!uniqueId || seenLinks.has(uniqueId)) {
+            uniqueId = `l-${i}-${Math.random().toString(36).substring(2, 6)}`;
+          }
+          seenLinks.add(uniqueId);
+          return { ...item, id: uniqueId };
+        });
+
+        const seenSlides = new Set<string>();
+        merged.heroSlides = merged.heroSlides.map((item: any, i: number) => {
+          let uniqueId = item.id;
+          if (!uniqueId || seenSlides.has(uniqueId)) {
+            uniqueId = `slide-${i}-${Math.random().toString(36).substring(2, 6)}`;
+          }
+          seenSlides.add(uniqueId);
+
+          // Fix chip image on solar slide if legacy or stale
+          let imageUrl = item.imageUrl;
+          let badge = item.badge;
+          let subtitle = item.subtitle;
+          let title = item.title;
+          let description = item.description;
+
+          if (i === 0) {
+            badge = 'Energía Limpia';
+            subtitle = 'Kits de Energía Solar';
+            title = 'Venta, Instalación y Soporte';
+            description = 'Vendemos, instalamos, configuramos y brindamos soporte integral a equipos de energía solar fotovoltaica para proyectos residenciales y rurales.';
+            imageUrl = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=800&q=80';
+          } else if (
+            (badge && (badge.toLowerCase().includes('solar') || badge.toLowerCase().includes('energía limpia'))) ||
+            (subtitle && subtitle.toLowerCase().includes('solar')) ||
+            (title && title.toLowerCase().includes('solar'))
+          ) {
+            imageUrl = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=800&q=80';
+          }
+
+          return { ...item, id: uniqueId, badge, subtitle, title, description, imageUrl };
+        });
+
+        const seenBanners = new Set<string>();
+        merged.quickBanners = merged.quickBanners.map((item: any, i: number) => {
+          let uniqueId = item.id;
+          if (!uniqueId || seenBanners.has(uniqueId)) {
+            uniqueId = `banner-${i}-${Math.random().toString(36).substring(2, 6)}`;
+          }
+          seenBanners.add(uniqueId);
+          return { ...item, id: uniqueId };
+        });
+
+        const seenServices = new Set<string>();
+        merged.servicesList = merged.servicesList.map((item: any, i: number) => {
+          let uniqueId = item.id;
+          if (!uniqueId || seenServices.has(uniqueId)) {
+            uniqueId = `serv-${i}-${Math.random().toString(36).substring(2, 6)}`;
+          }
+          seenServices.add(uniqueId);
+          return { ...item, id: uniqueId };
+        });
+
+        return merged;
       }
     } catch (e) {
       console.error('Failed to parse site data from localStorage', e);
@@ -196,7 +253,12 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uniqueId = `vl-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
           }
           seen.add(uniqueId);
-          return { ...log, id: uniqueId };
+          return { 
+            ...log, 
+            id: uniqueId,
+            visitCount: log.visitCount || 1,
+            visitHistory: log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }]
+          };
         });
       }
     } catch (e) {
@@ -239,6 +301,12 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!loggedInSession) {
       sessionStorage.setItem('rch_session_logged', 'true');
 
+      let visitorToken = localStorage.getItem('rch_visitor_token');
+      if (!visitorToken) {
+        visitorToken = `vtok_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem('rch_visitor_token', visitorToken);
+      }
+
       const ua = navigator.userAgent;
       let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
       if (/iPad|Tablet/i.test(ua)) devType = 'Tablet';
@@ -250,43 +318,79 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       else if (ua.includes('Firefox')) browserName = 'Firefox';
       else if (ua.includes('Edg')) browserName = 'Edge';
 
+      const currentTimestamp = new Date().toLocaleString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      const visitedSection = window.location.hash || '#inicio';
+
+      const recordVisit = (
+        vToken: string,
+        ipAddr: string,
+        locationStr: string
+      ) => {
+        setVisitorLogs(prev => {
+          // Check if same visitor exists by visitorToken OR by IP & UserAgent
+          const existingIdx = prev.findIndex(l => 
+            (l.visitorToken && l.visitorToken === vToken) || 
+            (l.ip === ipAddr && l.userAgent === ua)
+          );
+
+          if (existingIdx !== -1) {
+            // Existing visitor returning: update count & add to visitHistory
+            const existing = prev[existingIdx];
+            const newVisitCount = (existing.visitCount || 1) + 1;
+            const newHistoryItem = { timestamp: currentTimestamp, visitedSection };
+            const existingHistory = existing.visitHistory || [{ timestamp: existing.timestamp, visitedSection: existing.visitedSection }];
+            
+            const updatedEntry: VisitorLog = {
+              ...existing,
+              visitorToken: vToken,
+              ip: ipAddr,
+              timestamp: currentTimestamp,
+              visitCount: newVisitCount,
+              visitHistory: [newHistoryItem, ...existingHistory],
+              visitedSection,
+              browser: `${browserName} (${devType})`,
+              deviceType: devType,
+              location: locationStr
+            };
+
+            const updatedLogs = [...prev];
+            updatedLogs.splice(existingIdx, 1);
+            return [updatedEntry, ...updatedLogs];
+          } else {
+            // Brand new visitor!
+            const newEntry: VisitorLog = {
+              id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+              visitorToken: vToken,
+              ip: ipAddr,
+              timestamp: currentTimestamp,
+              firstSeen: currentTimestamp,
+              visitCount: 1,
+              visitHistory: [{ timestamp: currentTimestamp, visitedSection }],
+              deviceType: devType,
+              browser: `${browserName} (${devType})`,
+              location: locationStr,
+              visitedSection,
+              userAgent: ua
+            };
+            return [newEntry, ...prev];
+          }
+        });
+      };
+
       fetch('https://api.ipify.org?format=json')
         .then(res => res.json())
         .then(data => {
-          const newEntry: VisitorLog = {
-            id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            ip: data.ip || '190.228.18.42',
-            timestamp: new Date().toLocaleString('es-AR'),
-            deviceType: devType,
-            browser: `${browserName} (${devType})`,
-            location: 'Neuquén / Buenos Aires, AR',
-            visitedSection: window.location.hash || '#inicio',
-            userAgent: ua
-          };
-          setVisitorLogs(prev => {
-            if (prev.some(l => l.ip === newEntry.ip && l.timestamp === newEntry.timestamp)) {
-              return prev;
-            }
-            return [newEntry, ...prev];
-          });
+          recordVisit(visitorToken!, data.ip || '190.228.18.42', 'Neuquén / Buenos Aires, AR');
         })
         .catch(() => {
-          const newEntry: VisitorLog = {
-            id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            ip: '190.228.18.42 (IP Local)',
-            timestamp: new Date().toLocaleString('es-AR'),
-            deviceType: devType,
-            browser: `${browserName} (${devType})`,
-            location: 'Neuquén, Argentina',
-            visitedSection: window.location.hash || '#inicio',
-            userAgent: ua
-          };
-          setVisitorLogs(prev => {
-            if (prev.some(l => l.ip === newEntry.ip && l.timestamp === newEntry.timestamp)) {
-              return prev;
-            }
-            return [newEntry, ...prev];
-          });
+          recordVisit(visitorToken!, '190.228.18.42 (IP Local)', 'Neuquén, Argentina');
         });
     }
   }, []);

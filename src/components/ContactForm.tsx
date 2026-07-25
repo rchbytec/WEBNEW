@@ -115,13 +115,11 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
     setIsSubmitting(true);
 
     try {
-      // Check if user has EmailJS credentials configured
       const serviceId = emailJsConfig.serviceId || import.meta.env.VITE_EMAILJS_SERVICE_ID;
       const templateId = emailJsConfig.templateId || import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
       const publicKey = emailJsConfig.publicKey || import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
 
       if (serviceId && templateId && publicKey) {
-        // Live EmailJS dispatch
         await emailjs.send(
           serviceId,
           templateId,
@@ -136,7 +134,6 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
           publicKey
         );
       } else {
-        // Fallback simulation mode
         await new Promise((resolve) => setTimeout(resolve, 1200));
       }
 
@@ -211,7 +208,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
                   <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
                     <button
                       onClick={() => setSubmitSuccess(false)}
-                      className={`px-5 py-2.5 rounded-lg font-semibold text-xs transition-colors ${
+                      className={`px-5 py-2.5 rounded-lg font-semibold text-xs transition-colors cursor-pointer ${
                         darkMode ? 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-800 hover:bg-zinc-200'
                       }`}
                     >
@@ -351,7 +348,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
                       <button
                         type="button"
                         onClick={generateNewCaptcha}
-                        className={`p-1.5 rounded-md transition-colors flex items-center gap-1 text-[11px] ${
+                        className={`p-1.5 rounded-md transition-colors flex items-center gap-1 text-[11px] cursor-pointer ${
                           darkMode ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-200'
                         }`}
                         title="Generar nuevo código"
@@ -445,4 +442,3 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
     </section>
   );
 };
-

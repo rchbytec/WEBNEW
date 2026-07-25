@@ -166,4 +166,3 @@ export const LocationSection: React.FC<LocationSectionProps> = ({ darkMode }) =>
     </section>
   );
 };
-

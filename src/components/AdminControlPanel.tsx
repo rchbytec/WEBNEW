@@ -38,7 +38,9 @@ import {
   Search,
   Laptop,
   Smartphone,
-  Tablet
+  Tablet,
+  Clock,
+  ChevronDown
 } from 'lucide-react';
 
 interface AdminControlPanelProps {
@@ -71,14 +73,69 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
   // Search filter for visitor logs
   const [visitorSearchQuery, setVisitorSearchQuery] = useState('');
+  const [expandedVisitorId, setExpandedVisitorId] = useState<string | null>(null);
 
-  // Local draft state initialized from siteData
-  const [formData, setFormData] = useState(siteData);
+  // Local draft state initialized safely from siteData
+  const getSafeData = React.useCallback((data: any) => {
+    if (!data) return siteData;
+    return {
+      ...data,
+      companyInfo: {
+        ...(siteData?.companyInfo || {}),
+        ...(data?.companyInfo || {}),
+        socials: Array.isArray(data?.companyInfo?.socials)
+          ? data.companyInfo.socials
+          : Array.isArray(siteData?.companyInfo?.socials)
+          ? siteData.companyInfo.socials
+          : []
+      },
+      headerLinks: Array.isArray(data?.headerLinks) ? data.headerLinks : siteData?.headerLinks || [],
+      heroSlides: Array.isArray(data?.heroSlides) ? data.heroSlides : siteData?.heroSlides || [],
+      quickBanners: Array.isArray(data?.quickBanners) ? data.quickBanners : siteData?.quickBanners || [],
+      servicesList: Array.isArray(data?.servicesList) ? data.servicesList : siteData?.servicesList || [],
+      brands: Array.isArray(data?.brands) ? data.brands : siteData?.brands || [],
+      adminCredentials: {
+        email: 'admin@rchbytecsrl.com.ar',
+        password: 'Admin_123',
+        ...(siteData?.adminCredentials || {}),
+        ...(data?.adminCredentials || {})
+      },
+      simulatorConfig: {
+        badge: 'DEMO INTERACTIVA EN VIVO',
+        title: 'Simulación Domótica',
+        description: 'Pruébelo usted mismo: controle la iluminación, cortinas motorizadas, bomba de agua, climatización y alarmas en tiempo real.',
+        initialLightsOn: true,
+        initialLightBrightness: 85,
+        initialLightColor: 'warm',
+        initialCurtainsOpen: 70,
+        initialWaterPumpOn: false,
+        initialWaterPressure: 2.4,
+        initialAcOn: true,
+        initialAcTemp: 23,
+        initialAcMode: 'cool',
+        initialAlarmArmed: true,
+        initialGateOpen: false,
+        dayScenarioLabel: 'Escenario Día',
+        nightScenarioLabel: 'Escenario Noche',
+        waterPumpLabel: 'Encender Riego / Bomba',
+        initialLogText: 'Sistema RBT OS Domótica iniciado en línea.',
+        ctaTitle: '¿Desea automatizar su hogar, negocio o campo? Diseños a medida con garantía oficial.',
+        ctaDescription: 'Instalaciones profesionales de llaves GSM, bombas de agua y riegos inteligentes, alarmas centrales, cámaras de seguridad monitorizadas y domótica centralizada. Próximamente sistemas centrales de IA integrados.',
+        ctaButtonText: 'Solicitar Asesoramiento',
+        ...(siteData?.simulatorConfig || {}),
+        ...(data?.simulatorConfig || {})
+      }
+    };
+  }, [siteData]);
+
+  const [formData, setFormData] = useState(() => getSafeData(siteData));
 
   // When panel opens, sync local draft
   React.useEffect(() => {
-    setFormData(siteData);
-  }, [siteData, isAdminPanelOpen]);
+    if (isAdminPanelOpen && siteData) {
+      setFormData(getSafeData(siteData));
+    }
+  }, [siteData, isAdminPanelOpen, getSafeData]);
 
   if (!isAdminPanelOpen) return null;
 
@@ -163,7 +220,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     setIsAdminPanelOpen(false);
                   }
                 }}
-                className={`p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 ${
+                className={`p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                   darkMode ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
                 title="Cerrar sesión"
@@ -173,7 +230,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setIsAdminPanelOpen(false)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-colors cursor-pointer ${
                   darkMode ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
               >
@@ -190,7 +247,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
             }`}>
               <button
                 onClick={() => setActiveTab('general')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'general'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -202,7 +259,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('header')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'header'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -214,7 +271,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('hero')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'hero'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -226,7 +283,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('quick')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'quick'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -238,7 +295,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('services')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'services'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -250,7 +307,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('simulator')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'simulator'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -262,7 +319,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('visitors')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between cursor-pointer ${
                   activeTab === 'visitors'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -283,7 +340,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('socials')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'socials'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -295,7 +352,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setActiveTab('admin')}
-                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
                   activeTab === 'admin'
                     ? 'bg-emerald-500 text-white shadow-sm'
                     : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
@@ -311,7 +368,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     setConfirmTextRestoreFactory('');
                     setShowRestoreFactoryModal(true);
                   }}
-                  className={`w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-colors flex items-center gap-2 ${
+                  className={`w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-colors flex items-center gap-2 cursor-pointer ${
                     darkMode ? 'border-zinc-800 text-red-400 hover:bg-red-500/10' : 'border-zinc-200 text-red-600 hover:bg-red-50'
                   }`}
                 >
@@ -597,7 +654,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         };
                         setFormData({ ...formData, heroSlides: [...formData.heroSlides, newSlide] });
                       }}
-                      className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1"
+                      className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Agregar Slide</span>
@@ -620,7 +677,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                               const updated = formData.heroSlides.filter((_, i) => i !== idx);
                               setFormData({ ...formData, heroSlides: updated });
                             }}
-                            className="p-1 rounded text-red-400 hover:bg-red-500/10"
+                            className="p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -792,7 +849,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         };
                         setFormData({ ...formData, servicesList: [...formData.servicesList, newServ] });
                       }}
-                      className="px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Agregar Servicio</span>
@@ -811,7 +868,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                               const updated = formData.servicesList.filter((_, i) => i !== idx);
                               setFormData({ ...formData, servicesList: updated });
                             }}
-                            className="p-1 rounded text-red-400 hover:bg-red-500/10"
+                            className="p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -849,7 +906,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 updated[idx].highlighted = e.target.checked;
                                 setFormData({ ...formData, servicesList: updated });
                               }}
-                              className="rounded border-zinc-700 text-emerald-500 focus:ring-0"
+                              className="rounded border-zinc-700 text-emerald-500 focus:ring-0 cursor-pointer"
                             />
                             <span className="text-[11px] font-semibold">Destacado</span>
                           </label>
@@ -1365,17 +1422,19 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                   {/* Metrics cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Total de Visitas</span>
-                      <div className="text-2xl font-black font-mono text-emerald-400">{visitorLogs.length}</div>
-                      <span className="text-[10px] text-zinc-500">Registradas en el sistema</span>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Total de Ingresos</span>
+                      <div className="text-2xl font-black font-mono text-emerald-400">
+                        {visitorLogs.reduce((acc, l) => acc + (l.visitCount || 1), 0)}
+                      </div>
+                      <span className="text-[10px] text-zinc-500">Sesiones y reingresos acumulados</span>
                     </div>
 
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">IPs Únicas</span>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Dispositivos Únicos</span>
                       <div className="text-2xl font-black font-mono text-cyan-400">
-                        {new Set(visitorLogs.map(l => l.ip)).size}
+                        {visitorLogs.length}
                       </div>
-                      <span className="text-[10px] text-zinc-500">Visitantes distintos</span>
+                      <span className="text-[10px] text-zinc-500">Equipos / IPs reconocidos</span>
                     </div>
 
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
@@ -1395,7 +1454,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     </div>
 
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Último Acceso</span>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Última Visita</span>
                       <div className="text-xs font-bold font-mono text-amber-400 truncate mt-1">
                         {visitorLogs[0]?.timestamp || 'Sin visitas'}
                       </div>
@@ -1434,56 +1493,126 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                               darkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
                             }`}>
                               <th className="py-3 px-4">Dirección IP</th>
-                              <th className="py-3 px-4">Fecha y Hora</th>
+                              <th className="py-3 px-4">Estado / Reingresos</th>
+                              <th className="py-3 px-4">Último Acceso</th>
                               <th className="py-3 px-4">Ubicación</th>
                               <th className="py-3 px-4">Dispositivo / Navegador</th>
-                              <th className="py-3 px-4">Sección</th>
+                              <th className="py-3 px-4 text-center">Historial</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-800/30 text-xs">
                             {visitorLogs
                               .filter(log => {
-                                const q = visitorSearchQuery.toLowerCase();
+                                if (!log) return false;
+                                const q = (visitorSearchQuery || '').toLowerCase().trim();
+                                if (!q) return true;
+                                const ip = String(log.ip || '').toLowerCase();
+                                const loc = String(log.location || '').toLowerCase();
+                                const browser = String(log.browser || '').toLowerCase();
+                                const devType = String(log.deviceType || '').toLowerCase();
+                                const section = String(log.visitedSection || '').toLowerCase();
                                 return (
-                                  log.ip.toLowerCase().includes(q) ||
-                                  log.location.toLowerCase().includes(q) ||
-                                  log.browser.toLowerCase().includes(q) ||
-                                  log.deviceType.toLowerCase().includes(q) ||
-                                  log.visitedSection.toLowerCase().includes(q)
+                                  ip.includes(q) ||
+                                  loc.includes(q) ||
+                                  browser.includes(q) ||
+                                  devType.includes(q) ||
+                                  section.includes(q)
                                 );
                               })
-                              .map((log, index) => (
-                                <tr key={`admin-vlog-${log.id || 'vl'}-${index}`} className={`hover:bg-zinc-800/20 transition-colors ${
-                                  darkMode ? 'text-zinc-300' : 'text-zinc-800'
-                                }`}>
-                                  <td className="py-3 px-4 font-mono font-bold text-emerald-400">
-                                    {log.ip}
-                                  </td>
-                                  <td className="py-3 px-4 font-mono text-[11px] text-zinc-400">
-                                    {log.timestamp}
-                                  </td>
-                                  <td className="py-3 px-4 font-semibold text-zinc-300">
-                                    {log.location}
-                                  </td>
-                                  <td className="py-3 px-4">
-                                    <div className="flex items-center gap-1.5">
-                                      {log.deviceType === 'Móvil' ? (
-                                        <Smartphone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                                      ) : log.deviceType === 'Tablet' ? (
-                                        <Tablet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                                      ) : (
-                                        <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                      )}
-                                      <span className="truncate max-w-[180px]">{log.browser}</span>
-                                    </div>
-                                  </td>
-                                  <td className="py-3 px-4">
-                                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[10px] font-mono border border-zinc-700">
-                                      {log.visitedSection}
-                                    </span>
-                                  </td>
-                                </tr>
-                              ))}
+                              .map((log, index) => {
+                                const isExpanded = expandedVisitorId === log.id;
+                                const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
+                                return (
+                                  <React.Fragment key={`admin-vlog-${log.id || 'vl'}-${index}`}>
+                                    <tr className={`hover:bg-zinc-800/20 transition-colors ${
+                                      darkMode ? 'text-zinc-300' : 'text-zinc-800'
+                                    }`}>
+                                      <td className="py-3 px-4 font-mono font-bold text-emerald-400">
+                                        {log.ip}
+                                      </td>
+                                      <td className="py-3 px-4 font-mono text-[11px]">
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                          (log.visitCount || 1) > 1
+                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                        }`}>
+                                          {(log.visitCount || 1) > 1 
+                                            ? `Volvió a ingresar (${log.visitCount} veces)` 
+                                            : 'Primer ingreso'}
+                                        </span>
+                                      </td>
+                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-300">
+                                        {log.timestamp}
+                                      </td>
+                                      <td className="py-3 px-4 font-semibold text-zinc-300">
+                                        {log.location}
+                                      </td>
+                                      <td className="py-3 px-4">
+                                        <div className="flex items-center gap-1.5">
+                                          {log.deviceType === 'Móvil' ? (
+                                            <Smartphone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                          ) : log.deviceType === 'Tablet' ? (
+                                            <Tablet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                          ) : (
+                                            <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                          )}
+                                          <span className="truncate max-w-[160px]">{log.browser}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-3 px-4 text-center">
+                                        <button
+                                          onClick={() => setExpandedVisitorId(isExpanded ? null : log.id)}
+                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-semibold border border-zinc-700 transition-colors cursor-pointer"
+                                        >
+                                          <Clock className="w-3 h-3 text-cyan-400" />
+                                          <span>Historial ({visits.length})</span>
+                                          <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                    {isExpanded && (
+                                      <tr className={darkMode ? 'bg-zinc-950/90' : 'bg-zinc-50'}>
+                                        <td colSpan={6} className="p-4 border-b border-zinc-800">
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between text-xs font-bold text-zinc-400 border-b border-zinc-800/60 pb-2">
+                                              <span className="flex items-center gap-2">
+                                                <Users className="w-3.5 h-3.5 text-cyan-400" />
+                                                Historial Completo de Accesos — IP: {log.ip}
+                                              </span>
+                                              <span className="text-[11px] font-mono text-zinc-500">
+                                                {log.visitCount || visits.length} ingresos registrados
+                                              </span>
+                                            </div>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pt-1">
+                                              {visits.map((v, vIdx) => (
+                                                <div 
+                                                  key={`vhist-${log.id}-${vIdx}`}
+                                                  className={`flex items-center justify-between p-2.5 rounded-lg border text-[11px] font-mono ${
+                                                    darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
+                                                  }`}
+                                                >
+                                                  <div className="flex items-center gap-2">
+                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${vIdx === 0 ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                                                    <div className="flex flex-col">
+                                                      <span className="font-bold">{v.timestamp}</span>
+                                                      <span className="text-[10px] text-zinc-500">
+                                                        {vIdx === 0 ? 'Última entrada' : `Ingreso N° ${visits.length - vIdx}`}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                  <span className="px-2 py-0.5 rounded bg-zinc-800 text-cyan-300 text-[10px] border border-zinc-700">
+                                                    {v.visitedSection || '#inicio'}
+                                                  </span>
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    )}
+                                  </React.Fragment>
+                                );
+                              })}
                           </tbody>
                         </table>
                       </div>
@@ -1576,7 +1705,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     <button
                       onClick={handleSaveAdminCredentials}
                       disabled={emailSending}
-                      className="w-full py-3 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20"
+                      className="w-full py-3 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-600/20 cursor-pointer"
                     >
                       {emailSending ? (
                         <span className="inline-block animate-spin font-mono">Enviando correo...</span>

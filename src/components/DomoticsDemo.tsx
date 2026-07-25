@@ -6,18 +6,13 @@ import {
   Moon,
   Droplets, 
   Wind, 
-  ShieldCheck, 
-  DoorClosed, 
-  Power, 
-  Sliders, 
-  Zap, 
   Activity, 
   CheckCircle2, 
   Lock, 
   Unlock,
   Gauge,
   Sparkles,
-  Volume2
+  DoorClosed
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,9 +41,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
     nightScenarioLabel: 'Escenario Noche',
     waterPumpLabel: 'Encender Riego / Bomba',
     initialLogText: 'Sistema RBT OS Domótica iniciado en línea.',
-    ctaTitle: '¿Desea automatizar su hogar, negocio o campo en Buenos Aires o Neuquén?',
-    ctaDescription: 'Diseñamos instalaciones a medida de llaves GSM, bombas de agua inteligentes, alarmas, cámaras y domótica centralizada.',
-    ctaButtonText: 'Solicitar Asesoramiento Técnico',
+    ctaTitle: '¿Desea automatizar su hogar, negocio o campo? Diseños a medida con garantía oficial.',
+    ctaDescription: 'Instalaciones profesionales de llaves GSM, bombas de agua y riegos inteligentes, alarmas centrales, cámaras de seguridad monitorizadas y domótica centralizada. Próximamente sistemas centrales de IA integrados.',
+    ctaButtonText: 'Solicitar Asesoramiento',
   };
 
   // Device States initialized from simulatorConfig
@@ -198,7 +193,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           <span className={`text-xs font-mono uppercase tracking-wider mr-2 hidden sm:inline ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Escenarios rápidos:</span>
           <button
             onClick={triggerDayMode}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <Sun className="w-4 h-4 text-amber-500" />
             <span>☀️ {sim.dayScenarioLabel || 'Escenario Día'}</span>
@@ -206,7 +201,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
           <button
             onClick={triggerNightMode}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-semibold transition-all shadow-sm active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <Moon className="w-4 h-4 text-purple-400" />
             <span>🌙 {sim.nightScenarioLabel || 'Escenario Noche'}</span>
@@ -214,7 +209,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
           <button
             onClick={triggerIrrigation}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
               waterPumpOn 
                 ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400 shadow-cyan-500/20 shadow-lg animate-pulse'
                 : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-500'
@@ -295,19 +290,14 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                 {/* Background Room Outline */}
                 <rect x="20" y="40" width="460" height="230" rx="12" fill="#09090b" stroke="#27272a" strokeWidth="3" />
 
-                {/* PIR Infrarrojo Motion Sensor (Top Left Wall of Room) */}
+                {/* PIR Infrarrojo Motion Sensor */}
                 <g transform="translate(35, 65)">
-                  {/* Wall Mount Base */}
                   <rect x="-4" y="0" width="8" height="14" rx="2" fill="#27272a" stroke="#52525b" strokeWidth="1" />
-                  {/* PIR Main Sensor Body */}
                   <path d="M 0 6 L 22 6 L 18 26 L 4 26 Z" fill="#18181b" stroke={alarmArmed ? "#10b981" : "#52525b"} strokeWidth="1.5" />
-                  {/* White Fresnel Lens Dome */}
                   <circle cx="11" cy="14" r="6" fill="#f4f4f5" stroke="#a1a1aa" strokeWidth="1" />
                   <circle cx="11" cy="14" r="2" fill={alarmArmed ? "#10b981" : "#71717a"} />
-                  {/* Status LED */}
                   <circle cx="17" cy="9" r="1.5" fill={alarmArmed ? "#ef4444" : "#52525b"} className={alarmArmed ? "animate-pulse" : ""} />
 
-                  {/* Infrared Detection Cone Beam when Armed */}
                   {alarmArmed && (
                     <g opacity="0.8">
                       <path d="M 11 14 L 60 70 L 10 100 Z" fill="rgba(16, 185, 129, 0.08)" stroke="#10b981" strokeWidth="1" strokeDasharray="3 3" className="animate-pulse" />
@@ -323,21 +313,15 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   </text>
                 </g>
 
-                {/* CCTV Smart Camera (Top Right Wall of Room) - Lowered */}
+                {/* CCTV Smart Camera */}
                 <g transform="translate(415, 80)">
-                  {/* Wall mounting bracket arm */}
                   <path d="M 36 6 L 24 6 L 24 16 L 16 16" fill="none" stroke="#52525b" strokeWidth="2.5" />
-                  {/* Camera Main Body */}
                   <rect x="-12" y="4" width="32" height="20" rx="4" fill="#18181b" stroke={alarmArmed ? "#10b981" : "#52525b"} strokeWidth="2" />
-                  {/* Sunshade hood */}
                   <rect x="-14" y="2" width="36" height="4" rx="1" fill="#27272a" />
-                  {/* Camera Lens */}
                   <circle cx="-3" cy="14" r="5" fill="#0f172a" stroke="#0284c7" strokeWidth="1.5" />
                   <circle cx="-3" cy="14" r="2" fill="#38bdf8" />
-                  {/* Status LED */}
                   <circle cx="12" cy="10" r="2.5" fill={alarmArmed ? "#ef4444" : "#52525b"} className={alarmArmed ? "animate-pulse" : ""} />
                   
-                  {/* Radiating Surveillance Waves when Armed */}
                   {alarmArmed && (
                     <g stroke="#10b981" strokeWidth="1.5" fill="none" className="animate-pulse">
                       <path d="M -20 18 A 12 12 0 0 0 -30 28" opacity="0.9" />
@@ -361,20 +345,16 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                 />
                 <line x1="250" y1="40" x2="250" y2="57" stroke="#52525B" strokeWidth="2" />
 
-                {/* Window & Vertical Roller Motorized Curtain Visualizer (Left side - Lowered) */}
+                {/* Window & Motorized Curtain Visualizer */}
                 <g transform="translate(45, 110)">
-                  {/* Window frame */}
                   <rect x="0" y="0" width="100" height="120" rx="4" fill="#18181b" stroke="#3f3f46" strokeWidth="2" />
-                  {/* Sky/Sunlight inside window */}
                   <rect x="4" y="4" width="92" height="112" rx="2" fill={curtainsOpen > 30 ? "#0284c7" : "#0f172a"} opacity={curtainsOpen / 100} />
                   {curtainsOpen > 20 && (
                     <circle cx="70" cy="30" r="12" fill="#fef08a" opacity={curtainsOpen / 100} />
                   )}
 
-                  {/* Roller Curtain Top Box / Cylinder */}
                   <rect x="2" y="2" width="96" height="8" rx="2" fill="#27272a" stroke="#52525b" strokeWidth="1" />
 
-                  {/* Vertical Roller Curtain Fabric (sube y baja) */}
                   <rect 
                     x="4" 
                     y="10" 
@@ -384,7 +364,6 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     className="transition-all duration-500"
                     opacity="0.95"
                   />
-                  {/* Bottom weighted rod on curtain */}
                   {(104 * (1 - curtainsOpen / 100)) > 2 && (
                     <line 
                       x1="4" 
@@ -397,7 +376,6 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     />
                   )}
 
-                  {/* Magnetic Sensor on Window Frame */}
                   <g transform="translate(92, 50)">
                     <rect x="0" y="0" width="5" height="14" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
                     {alarmArmed && (
@@ -411,14 +389,13 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   </text>
                 </g>
 
-                {/* Smart HVAC / AC Unit Visualizer (Centered in Room) */}
+                {/* Smart HVAC / AC Unit Visualizer */}
                 <g transform="translate(190, 105)">
                   <rect x="0" y="0" width="120" height="36" rx="6" fill="#18181b" stroke={acOn ? "#10b981" : "#3f3f46"} strokeWidth="2" />
                   <circle cx="15" cy="18" r="4" fill={acOn ? "#10b981" : "#71717a"} />
                   <text x="65" y="22" textAnchor="middle" fill={acOn ? "#ffffff" : "#a1a1aa"} fontSize="12" fontWeight="bold">
                     {acOn ? `${acTemp}°C ${acMode.toUpperCase()}` : 'AC OFF'}
                   </text>
-                  {/* Air flow lines if AC on */}
                   {acOn && (
                     <g opacity="0.7">
                       <path d="M 20 42 Q 35 52 50 42" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="4" className="animate-pulse" />
@@ -427,12 +404,10 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   )}
                 </g>
 
-                {/* Smart Overhead Sectional Gate / Portón Levadizo Automático */}
+                {/* Smart Overhead Gate */}
                 <g transform="translate(320, 168)">
-                  {/* Outer Frame & Opening */}
                   <rect x="0" y="0" width="120" height="66" rx="4" fill="#09090b" stroke="#3f3f46" strokeWidth="2" />
                   
-                  {/* Interior Garage view when gate is elevated/open */}
                   {gateOpen && (
                     <g opacity="0.7">
                       <rect x="4" y="4" width="112" height="58" rx="2" fill="#18181b" />
@@ -442,18 +417,15 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     </g>
                   )}
 
-                  {/* Vertical Guide Tracks */}
                   <line x1="4" y1="4" x2="4" y2="62" stroke="#52525b" strokeWidth="1.5" strokeDasharray="3" />
                   <line x1="116" y1="4" x2="116" y2="62" stroke="#52525b" strokeWidth="1.5" strokeDasharray="3" />
 
-                  {/* Sectional Gate Panel (Elevates UP when open) */}
                   <g 
                     className="transition-all duration-700 ease-in-out"
                     style={{
                       transform: gateOpen ? 'translateY(-48px)' : 'translateY(0px)',
                     }}
                   >
-                    {/* Full Door Panel */}
                     <rect 
                       x="4" 
                       y="4" 
@@ -465,20 +437,16 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                       strokeWidth="1.5" 
                     />
                     
-                    {/* Sectional Horizontal Panel Lines */}
                     <line x1="4" y1="18" x2="116" y2="18" stroke="#1e293b" strokeWidth="2" />
                     <line x1="4" y1="33" x2="116" y2="33" stroke="#1e293b" strokeWidth="2" />
                     <line x1="4" y1="47" x2="116" y2="47" stroke="#1e293b" strokeWidth="2" />
 
-                    {/* Lock Handle in Center */}
                     <rect x="52" y="30" width="16" height="6" rx="1" fill="#0284c7" />
                   </g>
 
-                  {/* Top Automatic Motor Drive Unit */}
                   <rect x="45" y="-6" width="30" height="8" rx="2" fill="#27272a" stroke="#0ea5e9" strokeWidth="1" />
                   <circle cx="60" cy="-2" r="1.5" fill={gateOpen ? "#10b981" : "#a1a1aa"} />
 
-                  {/* Magnetic Contact Sensor on Gate Frame */}
                   <g transform="translate(-8, 25)">
                     <rect x="0" y="0" width="5" height="14" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
                     {alarmArmed && (
@@ -491,7 +459,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   </text>
                 </g>
 
-                {/* Alarm Status Badge in Room */}
+                {/* Alarm Status Badge */}
                 <g transform="translate(185, 190)">
                   <rect x="0" y="0" width="120" height="30" rx="15" fill={alarmArmed ? "#064e3b" : "#451a03"} stroke={alarmArmed ? "#10b981" : "#f59e0b"} strokeWidth="1.5" />
                   <text x="60" y="19" textAnchor="middle" fill={alarmArmed ? "#34d399" : "#fbbf24"} fontSize="10" fontWeight="bold">
@@ -547,7 +515,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     setLightsOn(!lightsOn);
                     addLog(!lightsOn ? 'Luces encendidas' : 'Luces apagadas', !lightsOn ? 'success' : 'info');
                   }}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     lightsOn 
                       ? 'bg-amber-500 text-zinc-950 hover:bg-amber-400 shadow-md shadow-amber-500/20' 
                       : darkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -573,7 +541,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     className={`w-full accent-amber-500 h-1.5 rounded-lg cursor-pointer ${darkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}
                   />
 
-                  {/* Color selector - Only 3 Tones: Cálida, Neutra, Fría */}
+                  {/* Color selector */}
                   <div className="flex items-center justify-between pt-1">
                     <span className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Tono de ambiente:</span>
                     <div className="flex items-center gap-2">
@@ -585,7 +553,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                         <button
                           key={`domo-color-${c.id}-${idx}`}
                           onClick={() => setLightColor(c.id as any)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
                             lightColor === c.id 
                               ? darkMode ? 'bg-zinc-800 text-white border-zinc-600 ring-2 ring-emerald-500/50' : 'bg-zinc-100 text-zinc-900 border-zinc-400 ring-2 ring-emerald-500/50'
                               : darkMode ? 'bg-zinc-900/80 text-zinc-400 border-zinc-800 hover:text-zinc-200' : 'bg-white text-zinc-600 border-zinc-200 hover:text-zinc-900'
@@ -618,7 +586,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
                 <button
                   onClick={triggerIrrigation}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     waterPumpOn 
                       ? 'bg-cyan-500 text-zinc-950 hover:bg-cyan-400 shadow-md shadow-cyan-500/20' 
                       : darkMode ? 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
@@ -628,7 +596,6 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                 </button>
               </div>
 
-              {/* Real time metrics gauge bar */}
               <div className={`pt-2 border-t flex items-center justify-between text-xs ${
                 darkMode ? 'border-zinc-800/80 text-zinc-400' : 'border-zinc-200 text-zinc-600'
               }`}>
@@ -681,7 +648,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   </div>
                   <button 
                     onClick={() => setAcOn(!acOn)}
-                    className={`text-[10px] px-2 py-0.5 rounded font-bold ${acOn ? 'bg-sky-500/20 text-sky-500 border border-sky-500/30' : darkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500'}`}
+                    className={`text-[10px] px-2 py-0.5 rounded font-bold cursor-pointer ${acOn ? 'bg-sky-500/20 text-sky-500 border border-sky-500/30' : darkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500'}`}
                   >
                     {acOn ? 'ON' : 'OFF'}
                   </button>
@@ -692,14 +659,14 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     <div className="flex items-center gap-1">
                       <button 
                         onClick={() => setAcTemp(Math.max(18, acTemp - 1))}
-                        className={`w-6 h-6 rounded font-bold text-xs ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
+                        className={`w-6 h-6 rounded font-bold text-xs cursor-pointer ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
                       >
                         -
                       </button>
                       <span className={`font-mono text-sm font-bold px-1 ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{acTemp}°C</span>
                       <button 
                         onClick={() => setAcTemp(Math.min(28, acTemp + 1))}
-                        className={`w-6 h-6 rounded font-bold text-xs ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
+                        className={`w-6 h-6 rounded font-bold text-xs cursor-pointer ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
                       >
                         +
                       </button>
@@ -710,7 +677,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                         <button
                           key={`domo-acmode-${m}-${idx}`}
                           onClick={() => setAcMode(m)}
-                          className={`px-1.5 py-0.5 rounded capitalize ${acMode === m ? 'bg-sky-500 text-zinc-950 font-bold' : darkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}
+                          className={`px-1.5 py-0.5 rounded capitalize cursor-pointer ${acMode === m ? 'bg-sky-500 text-zinc-950 font-bold' : darkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}
                         >
                           {m}
                         </button>
@@ -733,7 +700,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     setAlarmArmed(!alarmArmed);
                     addLog(!alarmArmed ? 'Alarma armada' : 'Alarma desarmada', !alarmArmed ? 'success' : 'warning');
                   }}
-                  className={`p-2.5 rounded-xl border transition-all ${
+                  className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                     alarmArmed ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
                   }`}
                 >
@@ -754,7 +721,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     setGateOpen(!gateOpen);
                     addLog(!gateOpen ? 'Portón abriendo...' : 'Portón cerrando...', 'info');
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     gateOpen ? 'bg-sky-500/20 border-sky-500/40 text-sky-500' : darkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-zinc-100 border-zinc-300 text-zinc-700'
                   }`}
                 >

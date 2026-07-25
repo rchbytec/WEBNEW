@@ -73,6 +73,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
             >
               {/* Text Side */}
               <div className="lg:col-span-7 flex flex-col items-start gap-4">
+                {/* Badge */}
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-md border text-xs font-mono uppercase tracking-wider ${
                   darkMode 
                     ? 'bg-zinc-800 border-zinc-700 text-zinc-300' 
@@ -82,17 +83,22 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
                   <span>{activeSlide.badge}</span>
                 </div>
 
-                <h1 className={`font-sans font-extrabold text-3xl sm:text-5xl lg:text-6xl tracking-tight leading-tight ${
+                {/* Subtitle */}
+                <span className={`text-xs sm:text-sm font-bold uppercase tracking-wider ${
+                  darkMode ? 'text-cyan-400' : 'text-cyan-700'
+                }`}>
+                  {activeSlide.subtitle}
+                </span>
+
+                {/* Title */}
+                <h1 className={`font-sans font-extrabold text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-tight ${
                   darkMode ? 'text-white' : 'text-zinc-900'
                 }`}>
                   {activeSlide.title}
                 </h1>
 
-                <p className={`text-lg sm:text-xl font-medium ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                  {activeSlide.subtitle}
-                </p>
-
-                <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                {/* Description */}
+                <p className={`text-sm sm:text-base max-w-2xl leading-relaxed ${darkMode ? 'text-zinc-300' : 'text-zinc-600'}`}>
                   {activeSlide.description}
                 </p>
 
@@ -144,7 +150,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
                       className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80";
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=800&q=80";
                       }}
                     />
                   </div>
@@ -215,4 +221,3 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
     </section>
   );
 };
-

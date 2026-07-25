@@ -121,7 +121,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ darkMode }) => {
               <button
                 key={`srv-cat-${cat.id || 'c'}-${idx}`}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`flex-1 min-w-[80px] sm:min-w-0 text-center px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                className={`flex-1 min-w-[80px] sm:min-w-0 text-center px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                   selectedCategory === cat.id
                     ? darkMode
                       ? 'bg-zinc-100 text-zinc-950 font-bold shadow-md'
@@ -147,7 +147,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ darkMode }) => {
             </p>
             <button
               onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-              className={`mt-3 text-xs font-semibold hover:underline ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}
+              className={`mt-3 text-xs font-semibold hover:underline cursor-pointer ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}
             >
               Restablecer filtros
             </button>
@@ -230,4 +230,3 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ darkMode }) => {
     </section>
   );
 };
-
