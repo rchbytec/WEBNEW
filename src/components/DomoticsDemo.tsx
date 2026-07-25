@@ -511,8 +511,8 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                 <span className="text-[10px] text-zinc-600 font-mono">RBT OS v4.2</span>
               </div>
               <div className="space-y-1 max-h-20 overflow-y-auto font-mono text-[11px]">
-                {logs.map((log) => (
-                  <div key={log.id} className="flex items-center gap-2 text-zinc-300">
+                {logs.map((log, index) => (
+                  <div key={`demo-log-${log.id || 'l'}-${index}`} className="flex items-center gap-2 text-zinc-300">
                     <span className="text-zinc-500 font-semibold">{log.time}</span>
                     <span className={log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}>
                       {log.text}
@@ -581,9 +581,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                         { id: 'warm', label: 'Cálida', bg: 'bg-amber-400' },
                         { id: 'neutral', label: 'Neutra', bg: 'bg-yellow-200' },
                         { id: 'cool', label: 'Fría', bg: 'bg-sky-400' },
-                      ].map((c) => (
+                      ].map((c, idx) => (
                         <button
-                          key={c.id}
+                          key={`domo-color-${c.id}-${idx}`}
                           onClick={() => setLightColor(c.id as any)}
                           className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
                             lightColor === c.id 
@@ -706,9 +706,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                     </div>
 
                     <div className="flex gap-1 text-[10px]">
-                      {(['cool', 'heat', 'eco'] as const).map((m) => (
+                      {(['cool', 'heat', 'eco'] as const).map((m, idx) => (
                         <button
-                          key={m}
+                          key={`domo-acmode-${m}-${idx}`}
                           onClick={() => setAcMode(m)}
                           className={`px-1.5 py-0.5 rounded capitalize ${acMode === m ? 'bg-sky-500 text-zinc-950 font-bold' : darkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}
                         >

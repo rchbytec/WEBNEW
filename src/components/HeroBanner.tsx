@@ -64,7 +64,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
           
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeSlide.id || currentIndex}
+              key={`hero-active-${activeSlide?.id || 'slide'}-${currentIndex}`}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -172,7 +172,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
             <div className="flex items-center gap-2">
               {heroSlides.map((slide, idx) => (
                 <button
-                  key={slide.id || idx}
+                  key={`hero-dot-${slide.id || 's'}-${idx}`}
                   onClick={() => setCurrentIndex(idx)}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     idx === currentIndex

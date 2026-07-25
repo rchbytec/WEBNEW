@@ -537,7 +537,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     </div>
 
                     {formData.headerLinks.map((link, idx) => (
-                      <div key={link.id} className={`p-3 rounded-xl border grid grid-cols-12 items-center gap-3 ${
+                      <div key={`admin-hdr-${link.id || 'l'}-${idx}`} className={`p-3 rounded-xl border grid grid-cols-12 items-center gap-3 ${
                         darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                       }`}>
                         <div className="col-span-1 text-xs font-mono font-bold text-zinc-500">#{idx + 1}</div>
@@ -606,7 +606,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
                   <div className="space-y-6">
                     {formData.heroSlides.map((slide, idx) => (
-                      <div key={slide.id} className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
+                      <div key={`admin-slide-${slide.id || 's'}-${idx}`} className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
                         darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                       }`}>
                         <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
@@ -727,7 +727,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
                   <div className="space-y-4">
                     {formData.quickBanners.map((banner, idx) => (
-                      <div key={banner.id} className={`p-4 rounded-xl border space-y-2 ${
+                      <div key={`admin-quick-${banner.id || 'b'}-${idx}`} className={`p-4 rounded-xl border space-y-2 ${
                         darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                       }`}>
                         <div className="font-mono text-xs font-bold text-emerald-500">Banner #{idx + 1}</div>
@@ -801,7 +801,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {formData.servicesList.map((serv, idx) => (
-                      <div key={serv.id} className={`p-4 rounded-xl border space-y-2 relative ${
+                      <div key={`admin-serv-${serv.id || 's'}-${idx}`} className={`p-4 rounded-xl border space-y-2 relative ${
                         darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                       }`}>
                         <div className="flex items-center justify-between">
@@ -1006,9 +1006,9 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         <div>
                           <label className="block text-[11px] font-semibold mb-1">Tono Inicial de Luz</label>
                           <div className="grid grid-cols-3 gap-1.5">
-                            {(['warm', 'neutral', 'cool'] as const).map((colorMode) => (
+                            {(['warm', 'neutral', 'cool'] as const).map((colorMode, idx) => (
                               <button
-                                key={colorMode}
+                                key={`admin-colormode-${colorMode}-${idx}`}
                                 type="button"
                                 onClick={() => setFormData({
                                   ...formData,
@@ -1452,8 +1452,8 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                   log.visitedSection.toLowerCase().includes(q)
                                 );
                               })
-                              .map((log) => (
-                                <tr key={log.id} className={`hover:bg-zinc-800/20 transition-colors ${
+                              .map((log, index) => (
+                                <tr key={`admin-vlog-${log.id || 'vl'}-${index}`} className={`hover:bg-zinc-800/20 transition-colors ${
                                   darkMode ? 'text-zinc-300' : 'text-zinc-800'
                                 }`}>
                                   <td className="py-3 px-4 font-mono font-bold text-emerald-400">
@@ -1503,7 +1503,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
                   <div className="space-y-3">
                     {formData.companyInfo.socials.map((soc, idx) => (
-                      <div key={soc.name} className="space-y-1">
+                      <div key={`admin-soc-${soc.name || 's'}-${idx}`} className="space-y-1">
                         <label className="block text-xs font-semibold">{soc.name}</label>
                         <input
                           type="text"

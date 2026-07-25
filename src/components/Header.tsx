@@ -97,9 +97,9 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-1">
-              {headerLinks.map((link) => (
+              {headerLinks.map((link, idx) => (
                 <a
-                  key={link.id || link.name}
+                  key={`desk-hdr-${link.id || 'link'}-${idx}`}
                   href={link.href}
                   className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                     darkMode
@@ -189,9 +189,9 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             }`}
           >
             <div className="flex flex-col gap-2">
-              {headerLinks.map((link) => (
+              {headerLinks.map((link, idx) => (
                 <a
-                  key={link.id || link.name}
+                  key={`mob-hdr-${link.id || 'link'}-${idx}`}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${

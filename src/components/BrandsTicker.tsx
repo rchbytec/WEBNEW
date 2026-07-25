@@ -12,8 +12,12 @@ export const BrandsTicker: React.FC<BrandsTickerProps> = ({ darkMode }) => {
   const [isTransitioning, setIsTransitioning] = useState(true);
   const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Repeat brands list to ensure endless step sliding
-  const extendedBrands = [...BRANDS, ...BRANDS, ...BRANDS];
+  // Repeat brands list to ensure endless step sliding with unique keys per set
+  const extendedBrands = [
+    ...BRANDS.map((b) => ({ ...b, id: `b1-${b.id}` })),
+    ...BRANDS.map((b) => ({ ...b, id: `b2-${b.id}` })),
+    ...BRANDS.map((b) => ({ ...b, id: `b3-${b.id}` }))
+  ];
 
   useEffect(() => {
     if (isHovered) return;
@@ -135,7 +139,7 @@ export const BrandsTicker: React.FC<BrandsTickerProps> = ({ darkMode }) => {
         >
           {extendedBrands.map((brand, idx) => (
             <div
-              key={`${brand.id}-${idx}`}
+              key={`ticker-brand-${brand.id || 'b'}-${idx}`}
               className={`flex flex-col items-center justify-between w-[200px] h-28 px-4 py-3 rounded-xl border transition-all cursor-pointer shadow-md group shrink-0 select-none ${
                 darkMode
                   ? 'bg-zinc-900/90 border-zinc-800 hover:border-zinc-600'

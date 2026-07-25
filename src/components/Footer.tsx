@@ -90,7 +90,7 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
 
         {/* Centered Social Media Links */}
         <div className="flex items-center justify-center gap-3 mb-8">
-          {(companyInfo.socials || []).map((social) => {
+          {(companyInfo.socials || []).map((social, idx) => {
             const Icon = social.icon === 'Facebook' ? Facebook :
                          social.icon === 'Twitter' ? Twitter :
                          social.icon === 'Instagram' ? Instagram :
@@ -98,7 +98,7 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
 
             return (
               <a
-                key={social.name}
+                key={`foot-soc-${idx}-${social.name || 's'}`}
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"

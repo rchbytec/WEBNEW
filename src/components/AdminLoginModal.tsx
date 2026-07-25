@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSiteContext } from '../context/SiteContext';
 import { sendAdminEmail } from '../utils/emailNotifier';
-import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, CheckCircle2, X, ArrowLeft, Send } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, CheckCircle2, X, ArrowLeft, Send, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginModalProps {
   darkMode: boolean;
@@ -20,6 +20,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -152,7 +153,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@rchbytecsrl.com.ar"
+                  placeholder="nombre@email.com"
                   className={`w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${
                     darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-zinc-500' : 'bg-zinc-50 border-zinc-300 text-zinc-900 focus:border-zinc-500'
                   }`}
@@ -166,16 +167,28 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                   <KeyRound className="w-3.5 h-3.5" />
                   <span>Contraseña</span>
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className={`w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${
-                    darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-zinc-500' : 'bg-zinc-50 border-zinc-300 text-zinc-900 focus:border-zinc-500'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`w-full px-3.5 py-2.5 pr-10 rounded-lg border text-sm focus:outline-none transition-colors ${
+                      darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-zinc-500' : 'bg-zinc-50 border-zinc-300 text-zinc-900 focus:border-zinc-500'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md transition-colors ${
+                      darkMode ? 'text-zinc-400 hover:text-white' : 'text-zinc-500 hover:text-zinc-900'
+                    }`}
+                    title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-between pt-1">
@@ -184,7 +197,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                   onClick={() => {
                     setIsRecoveryMode(true);
                     setError(null);
-                    setRecoveryEmail(email || siteData.adminCredentials.email);
+                    setRecoveryEmail(email);
                   }}
                   className="text-xs font-semibold text-emerald-500 hover:underline"
                 >
@@ -240,7 +253,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                   required
                   value={recoveryEmail}
                   onChange={(e) => setRecoveryEmail(e.target.value)}
-                  placeholder="admin@rchbytecsrl.com.ar"
+                  placeholder="nombre@email.com"
                   className={`w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none transition-colors ${
                     darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-zinc-500' : 'bg-zinc-50 border-zinc-300 text-zinc-900 focus:border-zinc-500'
                   }`}

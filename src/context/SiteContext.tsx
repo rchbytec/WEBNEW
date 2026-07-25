@@ -111,58 +111,7 @@ const defaultSiteData: SiteData = {
   simulatorConfig: defaultSimulatorConfig,
 };
 
-const defaultVisitorLogs: VisitorLog[] = [
-  {
-    id: 'vl-101',
-    ip: '190.228.18.42',
-    timestamp: new Date(Date.now() - 1000 * 60 * 12).toLocaleString('es-AR'),
-    deviceType: 'Escritorio',
-    browser: 'Chrome 126.0 (Windows)',
-    location: 'Neuquén, Argentina',
-    visitedSection: 'Inicio / #demo',
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-  },
-  {
-    id: 'vl-102',
-    ip: '181.164.22.10',
-    timestamp: new Date(Date.now() - 1000 * 60 * 45).toLocaleString('es-AR'),
-    deviceType: 'Móvil',
-    browser: 'Safari iOS 17.5 (iPhone)',
-    location: 'CABA, Buenos Aires, Argentina',
-    visitedSection: 'Servicios / #servicios',
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)'
-  },
-  {
-    id: 'vl-103',
-    ip: '200.55.132.88',
-    timestamp: new Date(Date.now() - 1000 * 60 * 110).toLocaleString('es-AR'),
-    deviceType: 'Escritorio',
-    browser: 'Firefox 127.0 (Linux)',
-    location: 'Plottier, Neuquén, Argentina',
-    visitedSection: 'Contacto / #contacto',
-    userAgent: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64)'
-  },
-  {
-    id: 'vl-104',
-    ip: '190.18.94.150',
-    timestamp: new Date(Date.now() - 1000 * 60 * 240).toLocaleString('es-AR'),
-    deviceType: 'Tablet',
-    browser: 'Chrome Mobile 125.0 (Android)',
-    location: 'Vicente López, Buenos Aires',
-    visitedSection: 'Oferta / #oferta',
-    userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-X200)'
-  },
-  {
-    id: 'vl-105',
-    ip: '186.136.210.5',
-    timestamp: new Date(Date.now() - 1000 * 60 * 380).toLocaleString('es-AR'),
-    deviceType: 'Móvil',
-    browser: 'Chrome 126.0 (Android)',
-    location: 'Cipolletti, Río Negro, Argentina',
-    visitedSection: 'Ubicación / #ubicacion',
-    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8)'
-  }
-];
+const defaultVisitorLogs: VisitorLog[] = [];
 
 interface SiteContextType {
   siteData: SiteData;
@@ -201,6 +150,31 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (!parsed.simulatorConfig) {
           parsed.simulatorConfig = defaultSimulatorConfig;
         }
+        // Sanitize headerLinks, heroSlides, quickBanners, servicesList, brands
+        if (Array.isArray(parsed.headerLinks)) {
+          parsed.headerLinks = parsed.headerLinks.map((item: any, i: number) => ({
+            ...item,
+            id: item.id || `l-${i}`
+          }));
+        }
+        if (Array.isArray(parsed.heroSlides)) {
+          parsed.heroSlides = parsed.heroSlides.map((item: any, i: number) => ({
+            ...item,
+            id: item.id || `slide-${i}`
+          }));
+        }
+        if (Array.isArray(parsed.quickBanners)) {
+          parsed.quickBanners = parsed.quickBanners.map((item: any, i: number) => ({
+            ...item,
+            id: item.id || `banner-${i}`
+          }));
+        }
+        if (Array.isArray(parsed.servicesList)) {
+          parsed.servicesList = parsed.servicesList.map((item: any, i: number) => ({
+            ...item,
+            id: item.id || `serv-${i}`
+          }));
+        }
         return parsed;
       }
     } catch (e) {
@@ -213,7 +187,17 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem(VISITORS_STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: VisitorLog[] = JSON.parse(saved);
+        const filtered = parsed.filter(log => !['vl-101', 'vl-102', 'vl-103', 'vl-104', 'vl-105'].includes(log.id));
+        const seen = new Set<string>();
+        return filtered.map((log, idx) => {
+          let uniqueId = log.id;
+          if (!uniqueId || seen.has(uniqueId)) {
+            uniqueId = `vl-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+          }
+          seen.add(uniqueId);
+          return { ...log, id: uniqueId };
+        });
       }
     } catch (e) {
       console.error('Failed to parse visitor logs', e);
@@ -270,7 +254,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .then(res => res.json())
         .then(data => {
           const newEntry: VisitorLog = {
-            id: `vl-${Date.now()}`,
+            id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
             ip: data.ip || '190.228.18.42',
             timestamp: new Date().toLocaleString('es-AR'),
             deviceType: devType,
@@ -279,11 +263,16 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             visitedSection: window.location.hash || '#inicio',
             userAgent: ua
           };
-          setVisitorLogs(prev => [newEntry, ...prev]);
+          setVisitorLogs(prev => {
+            if (prev.some(l => l.ip === newEntry.ip && l.timestamp === newEntry.timestamp)) {
+              return prev;
+            }
+            return [newEntry, ...prev];
+          });
         })
         .catch(() => {
           const newEntry: VisitorLog = {
-            id: `vl-${Date.now()}`,
+            id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
             ip: '190.228.18.42 (IP Local)',
             timestamp: new Date().toLocaleString('es-AR'),
             deviceType: devType,
@@ -292,7 +281,12 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             visitedSection: window.location.hash || '#inicio',
             userAgent: ua
           };
-          setVisitorLogs(prev => [newEntry, ...prev]);
+          setVisitorLogs(prev => {
+            if (prev.some(l => l.ip === newEntry.ip && l.timestamp === newEntry.timestamp)) {
+              return prev;
+            }
+            return [newEntry, ...prev];
+          });
         });
     }
   }, []);

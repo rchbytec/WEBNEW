@@ -117,9 +117,9 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ darkMode }) => {
           darkMode ? 'bg-zinc-900/90 border-zinc-800/80' : 'bg-white border-zinc-200 shadow-sm'
         }`}>
           <div className="flex items-center gap-1 sm:gap-1.5 min-w-max md:min-w-0 justify-between">
-            {categories.map((cat) => (
+            {categories.map((cat, idx) => (
               <button
-                key={cat.id}
+                key={`srv-cat-${cat.id || 'c'}-${idx}`}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex-1 min-w-[80px] sm:min-w-0 text-center px-3 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
                   selectedCategory === cat.id
@@ -156,7 +156,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ darkMode }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredServices.map((service, index) => (
               <motion.div
-                key={service.id || index}
+                key={`srv-item-${service.id || 's'}-${index}`}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.25, delay: index * 0.03 }}

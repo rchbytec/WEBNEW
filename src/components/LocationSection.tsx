@@ -150,7 +150,7 @@ export const LocationSection: React.FC<LocationSectionProps> = ({ darkMode }) =>
 
               <ul className={`space-y-2.5 text-xs ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
                 {companyInfo.hours.map((h, i) => (
-                  <li key={i} className={`flex items-center justify-between py-1.5 border-b last:border-0 ${
+                  <li key={`loc-hour-${i}-${h.days || ''}`} className={`flex items-center justify-between py-1.5 border-b last:border-0 ${
                     darkMode ? 'border-zinc-800/80' : 'border-zinc-200'
                   }`}>
                     <span className={`font-medium ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>{h.days}</span>
