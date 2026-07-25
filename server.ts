@@ -123,6 +123,13 @@ async function startServer() {
   app.use(express.json({ limit: '2mb' }));
 
   // API Routes
+  app.use('/api/visitors', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  });
+
   app.get('/api/visitors', (_req, res) => {
     res.json({ success: true, visitorLogs: serverVisitorLogs });
   });
@@ -137,7 +144,22 @@ async function startServer() {
     try {
       const { visitor_id, visitedSection, userAgent, locationOverride, screenWidth } = req.body || {};
       
-      const vid = visitor_id || `vtok_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      // Extract visitor_id from body or cookie
+      let vid = visitor_id;
+      if (!vid && req.headers.cookie) {
+        const match = req.headers.cookie.match(/(?:^|; )rbt_vid=([^;]*)/);
+        if (match && match[1]) {
+          vid = decodeURIComponent(match[1]);
+        }
+      }
+
+      if (!vid) {
+        vid = `vtok_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+      }
+
+      // Set cookie header on response
+      res.setHeader('Set-Cookie', `rbt_vid=${encodeURIComponent(vid)}; Max-Age=31536000; Path=/; SameSite=Lax`);
+
       const ua = userAgent || req.headers['user-agent'] || 'Desconocido';
 
       // Extract client IP address

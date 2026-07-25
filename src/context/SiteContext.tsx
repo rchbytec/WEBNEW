@@ -324,15 +324,30 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [visitorLogs]);
 
-  // Helper to safely get or create visitor_id without throwing errors on mobile/safari/incognito
+  // Helper to safely get or create visitor_id using both Cookies and LocalStorage
   const getSafeVisitorId = (): string => {
     let vid = '';
+
+    // 1. Check Cookie
     try {
-      vid = localStorage.getItem('visitor_id') || localStorage.getItem('rch_visitor_token') || '';
+      const match = document.cookie.match(/(?:^|; )rbt_vid=([^;]*)/);
+      if (match && match[1]) {
+        vid = decodeURIComponent(match[1]);
+      }
     } catch (e) {
-      // storage blocked
+      // silent
     }
 
+    // 2. Check LocalStorage
+    if (!vid) {
+      try {
+        vid = localStorage.getItem('visitor_id') || localStorage.getItem('rch_visitor_token') || '';
+      } catch (e) {
+        // silent
+      }
+    }
+
+    // 3. Generate if absent
     if (!vid) {
       try {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -344,19 +359,75 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!vid) {
         vid = 'vtok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
       }
-      try {
-        localStorage.setItem('visitor_id', vid);
-        localStorage.setItem('rch_visitor_token', vid);
-      } catch (e) {
-        // storage blocked
-      }
     }
+
+    // Persist to Cookie & LocalStorage
+    try {
+      localStorage.setItem('visitor_id', vid);
+      localStorage.setItem('rch_visitor_token', vid);
+      document.cookie = `rbt_vid=${encodeURIComponent(vid)}; max-age=31536000; path=/; SameSite=Lax`;
+    } catch (e) {
+      // silent
+    }
+
     return vid;
+  };
+
+  // Helper to parse local client info
+  const getClientInfo = () => {
+    const ua = navigator.userAgent;
+    let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
+    if (/iPad|Tablet|Android(?!.*Mobile)/i.test(ua)) {
+      devType = 'Tablet';
+    } else if (/Mobi|Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|SM-J7|Samsung|Mobile/i.test(ua) || window.innerWidth <= 768) {
+      devType = 'Móvil';
+    }
+
+    let browserName = 'Navegador Web';
+    if (/Edg/i.test(ua)) browserName = 'Edge';
+    else if (/Chrome|CriOS/i.test(ua)) browserName = 'Chrome';
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browserName = 'Safari';
+    else if (/Firefox|FxiOS/i.test(ua)) browserName = 'Firefox';
+    else if (/SamsungBrowser/i.test(ua)) browserName = 'Samsung Internet';
+
+    return { devType, browserName, ua };
   };
 
   // Synchronize visitors with backend API in real time ("en caliente")
   useEffect(() => {
     let isMounted = true;
+
+    // Helper to merge server logs with local state without losing items
+    const mergeLogs = (serverLogs: VisitorLog[], localLogs: VisitorLog[]): VisitorLog[] => {
+      const mergedMap = new Map<string, VisitorLog>();
+
+      // Server logs first
+      serverLogs.forEach(log => {
+        mergedMap.set(log.visitor_id || log.id, log);
+      });
+
+      // Overlay local logs if newer
+      localLogs.forEach(localLog => {
+        const id = localLog.visitor_id || localLog.id;
+        if (!mergedMap.has(id)) {
+          mergedMap.set(id, localLog);
+        } else {
+          const existing = mergedMap.get(id)!;
+          if (new Date(localLog.timestamp) > new Date(existing.timestamp)) {
+            mergedMap.set(id, {
+              ...existing,
+              timestamp: localLog.timestamp,
+              visitedSection: localLog.visitedSection,
+              visitHistory: localLog.visitHistory || existing.visitHistory
+            });
+          }
+        }
+      });
+
+      return Array.from(mergedMap.values()).sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+    };
 
     const fetchVisitorLogsFromServer = async () => {
       try {
@@ -365,26 +436,80 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await res.json();
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
-              setVisitorLogs(data.visitorLogs);
-              try {
-                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
-              } catch (e) {
-                // silent
-              }
+              setVisitorLogs(prev => {
+                const combined = mergeLogs(data.visitorLogs, prev);
+                try {
+                  localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(combined));
+                } catch (e) {}
+                return combined;
+              });
             }
           }
         }
       } catch (e) {
-        // fallback to localStorage sync if server is unreachable
+        // silent
       }
     };
 
-    const registerVisitOnServer = async (sectionOverride?: string) => {
+    const registerVisit = async (sectionOverride?: string) => {
       const vid = getSafeVisitorId();
       const currentSection = sectionOverride || window.location.hash || '#inicio';
-      const userAgent = navigator.userAgent;
+      const { devType, browserName, ua } = getClientInfo();
       const screenWidth = window.innerWidth;
 
+      const currentTimestamp = new Date().toLocaleString('es-AR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      // 1. Immediate local state update so it shows instantly in Admin Panel
+      setVisitorLogs(prev => {
+        const existingIdx = prev.findIndex(l => l.visitor_id === vid || l.id === vid);
+        if (existingIdx !== -1) {
+          const existing = prev[existingIdx];
+          const history = Array.isArray(existing.visitHistory) ? existing.visitHistory : [];
+          const newHistory = history[0]?.visitedSection !== currentSection
+            ? [{ timestamp: currentTimestamp, visitedSection: currentSection }, ...history]
+            : history;
+
+          const updated: VisitorLog = {
+            ...existing,
+            timestamp: currentTimestamp,
+            visitedSection: currentSection,
+            visitCount: existing.visitCount + (history[0]?.visitedSection !== currentSection ? 1 : 0),
+            visitHistory: newHistory,
+            deviceType: devType,
+            browser: `${browserName} (${devType})`,
+            userAgent: ua
+          };
+          const nextLogs = [...prev];
+          nextLogs.splice(existingIdx, 1);
+          return [updated, ...nextLogs];
+        } else {
+          const newLog: VisitorLog = {
+            id: vid,
+            visitor_id: vid,
+            visitorToken: vid,
+            ip: 'Detectando...',
+            firstSeen: currentTimestamp,
+            timestamp: currentTimestamp,
+            visitCount: 1,
+            visitHistory: [{ timestamp: currentTimestamp, visitedSection: currentSection }],
+            deviceType: devType,
+            browser: `${browserName} (${devType})`,
+            location: 'Argentina',
+            visitedSection: currentSection,
+            userAgent: ua
+          };
+          return [newLog, ...prev];
+        }
+      });
+
+      // 2. Register on server
       try {
         const res = await fetch('/api/visitors/register', {
           method: 'POST',
@@ -392,7 +517,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           body: JSON.stringify({
             visitor_id: vid,
             visitedSection: currentSection,
-            userAgent,
+            userAgent: ua,
             screenWidth
           })
         });
@@ -401,22 +526,23 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const data = await res.json();
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
-              setVisitorLogs(data.visitorLogs);
-              try {
-                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
-              } catch (e) {
-                // silent
-              }
+              setVisitorLogs(prev => {
+                const combined = mergeLogs(data.visitorLogs, prev);
+                try {
+                  localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(combined));
+                } catch (e) {}
+                return combined;
+              });
             }
           }
         }
       } catch (err) {
-        console.warn('Server register visit failed, falling back to local registration', err);
+        console.warn('Server register visit failed', err);
       }
     };
 
     // Initial registration
-    registerVisitOnServer();
+    registerVisit();
 
     // Poll server every 2 seconds for live real-time updates ("en caliente") across devices
     const pollInterval = setInterval(() => {
@@ -425,7 +551,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Listen to hash section changes
     const handleHashChange = () => {
-      registerVisitOnServer(window.location.hash);
+      registerVisit(window.location.hash);
     };
 
     window.addEventListener('hashchange', handleHashChange);
