@@ -47,6 +47,70 @@ interface AdminControlPanelProps {
   darkMode: boolean;
 }
 
+const formatAbbreviatedLocation = (locStr?: string): string => {
+  if (!locStr) return 'AR';
+  const rawParts = locStr.split(',').map(p => p.trim()).filter(Boolean);
+  if (rawParts.length === 0) return 'AR';
+
+  const provinceMap: Record<string, string> = {
+    'buenos aires f.d.': 'CF',
+    'buenos aires f. d.': 'CF',
+    'ciudad autónoma de buenos aires': 'CF',
+    'capital federal': 'CF',
+    'buenos aires': 'BA',
+    'río negro': 'RN',
+    'rio negro': 'RN',
+    'neuquén': 'NQN',
+    'neuquen': 'NQN',
+    'santa fe': 'SF',
+    'córdoba': 'CBA',
+    'cordoba': 'CBA',
+    'mendoza': 'MZ',
+    'entre ríos': 'ER',
+    'entre rios': 'ER',
+    'tucumán': 'TM',
+    'tucuman': 'TM',
+    'salta': 'SA',
+    'san luis': 'SL',
+    'san juan': 'SJ',
+    'chubut': 'CH',
+    'santa cruz': 'SC',
+    'tierra del fuego': 'TF',
+    'la pampa': 'LP',
+    'la rioja': 'LR',
+    'catamarca': 'CT',
+    'jujuy': 'JY',
+    'formosa': 'FM',
+    'chaco': 'CC',
+    'corrientes': 'CR',
+    'misiones': 'MN',
+    'argentina': 'AR',
+  };
+
+  const processed = rawParts.map((part, idx) => {
+    const lower = part.toLowerCase();
+    if (idx === 0) {
+      if (lower === 'buenos aires f.d.' || lower === 'ciudad autónoma de buenos aires' || lower === 'capital federal') {
+        return 'CF';
+      }
+      return part;
+    }
+    if (provinceMap[lower]) {
+      return provinceMap[lower];
+    }
+    return part;
+  });
+
+  const result: string[] = [];
+  processed.forEach(p => {
+    if (result.length === 0 || result[result.length - 1] !== p) {
+      result.push(p);
+    }
+  });
+
+  return result.join(', ');
+};
+
 export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }) => {
   const {
     isAdminPanelOpen,
@@ -1487,20 +1551,18 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         No hay registros de visitas en el historial. El registro está vacío.
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                      <div className="w-full overflow-hidden">
+                        <table className="w-full text-left border-collapse text-xs">
                           <thead>
                             <tr className={`text-[11px] font-bold border-b ${
                               darkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
                             }`}>
-                              <th className="py-3 px-4">visitor_id (ID Único)</th>
-                              <th className="py-3 px-4">Dirección IP</th>
-                              <th className="py-3 px-4">Cantidad</th>
-                              <th className="py-3 px-4">Primera Visita</th>
-                              <th className="py-3 px-4">Última Visita</th>
-                              <th className="py-3 px-4">Ubicación</th>
-                              <th className="py-3 px-4">Dispositivo</th>
-                              <th className="py-3 px-4 text-center">Historial</th>
+                              <th className="py-2.5 px-3">visitor_id (ID Único)</th>
+                              <th className="py-2.5 px-3">Dirección IP</th>
+                              <th className="py-2.5 px-3">Fecha y hora</th>
+                              <th className="py-2.5 px-3 text-center">Visitas</th>
+                              <th className="py-2.5 px-3">Ubicación</th>
+                              <th className="py-2.5 px-3">Dispositivo</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-zinc-800/30 text-xs">
@@ -1528,38 +1590,41 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 const activeVid = log.visitor_id || log.id || `vlog-${index}`;
                                 const isExpanded = expandedVisitorId === activeVid;
                                 const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
+                                const shortVid = activeVid.length > 12 ? `${activeVid.substring(0, 12)}...` : activeVid;
+
                                 return (
                                   <React.Fragment key={`vlog-frag-${activeVid}-${index}`}>
-                                    <tr className={`hover:bg-zinc-800/20 transition-colors ${
-                                      darkMode ? 'text-zinc-300' : 'text-zinc-800'
-                                    }`}>
-                                      <td className="py-3 px-4 font-mono font-bold text-cyan-400">
-                                        <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-[10px]" title={activeVid}>
-                                          {activeVid.length > 16 ? `${activeVid.substring(0, 16)}...` : activeVid}
-                                        </span>
+                                    <tr 
+                                      onClick={() => setExpandedVisitorId(isExpanded ? null : activeVid)}
+                                      className={`hover:bg-zinc-800/20 transition-colors cursor-pointer whitespace-nowrap ${
+                                        darkMode ? 'text-zinc-300' : 'text-zinc-800'
+                                      }`}
+                                    >
+                                      <td className="py-2.5 px-3 font-mono font-bold text-cyan-400">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-[11px]" title={`visitor_id completo: ${activeVid} (Clic para ver historial)`}>
+                                            {shortVid}
+                                          </span>
+                                          {visits.length > 0 && (
+                                            <ChevronDown className={`w-3 h-3 text-zinc-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                          )}
+                                        </div>
                                       </td>
-                                      <td className="py-3 px-4 font-mono font-bold text-emerald-400">
+                                      <td className="py-2.5 px-3 font-mono font-bold text-emerald-400">
                                         {log.ip}
                                       </td>
-                                      <td className="py-3 px-4 font-mono text-[11px]">
-                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                          (log.visitCount || 1) > 1
-                                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                        }`}>
-                                          {log.visitCount || 1} {log.visitCount === 1 ? 'visita' : 'visitas'}
-                                        </span>
-                                      </td>
-                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-400">
-                                        {log.firstSeen || log.timestamp}
-                                      </td>
-                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-200 font-semibold">
+                                      <td className="py-2.5 px-3 font-mono text-[11px] text-zinc-200 font-semibold">
                                         {log.timestamp}
                                       </td>
-                                      <td className="py-3 px-4 font-semibold text-zinc-300">
-                                        {log.location}
+                                      <td className="py-2.5 px-3 text-center font-mono font-bold text-amber-400 text-xs">
+                                        {log.visitCount || 1}
                                       </td>
-                                      <td className="py-3 px-4">
+                                      <td className="py-2.5 px-3 font-semibold text-zinc-300">
+                                        <span className="truncate max-w-[140px] block" title={`Ubicación completa: ${log.location}`}>
+                                          {formatAbbreviatedLocation(log.location)}
+                                        </span>
+                                      </td>
+                                      <td className="py-2.5 px-3">
                                         <div className="flex items-center gap-1.5">
                                           {log.deviceType === 'Móvil' ? (
                                             <Smartphone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
@@ -1568,51 +1633,33 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                           ) : (
                                             <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                           )}
-                                          <span className="truncate max-w-[140px]">{log.browser}</span>
+                                          <span className="truncate max-w-[130px] text-zinc-300">{log.browser}</span>
                                         </div>
-                                      </td>
-                                      <td className="py-3 px-4 text-center">
-                                        <button
-                                          onClick={() => setExpandedVisitorId(isExpanded ? null : activeVid)}
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-semibold border border-zinc-700 transition-colors cursor-pointer"
-                                        >
-                                          <Clock className="w-3 h-3 text-cyan-400" />
-                                          <span>Historial ({visits.length})</span>
-                                          <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                        </button>
                                       </td>
                                     </tr>
                                     {isExpanded && (
                                       <tr className={darkMode ? 'bg-zinc-950/90' : 'bg-zinc-50'}>
-                                        <td colSpan={8} className="p-4 border-b border-zinc-800">
+                                        <td colSpan={6} className="p-3 border-b border-zinc-800">
                                           <div className="space-y-2">
-                                            <div className="flex items-center justify-between text-xs font-bold text-zinc-400 border-b border-zinc-800/60 pb-2">
-                                              <span className="flex items-center gap-2">
-                                                <Users className="w-3.5 h-3.5 text-cyan-400" />
-                                                visitor_id: <code className="text-cyan-300 font-mono font-bold">{activeVid}</code> — IP: {log.ip}
-                                              </span>
-                                              <span className="text-[11px] font-mono text-zinc-500">
-                                                {log.visitCount || visits.length} ingresos registrados
-                                              </span>
+                                            <div className="flex flex-wrap items-center text-xs font-bold text-zinc-400 border-b border-zinc-800/60 pb-2 gap-2">
+                                              <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                                              <span>visitor_id: <code className="text-cyan-300 font-mono font-bold">{activeVid}</code></span>
+                                              <span>— IP: <span className="text-emerald-400 font-mono">{log.ip}</span></span>
+                                              <span>— Ubicación: <span className="text-amber-300 font-normal">{log.location || 'Argentina'}</span></span>
                                             </div>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pt-1">
+                                            <div className="space-y-1.5 pt-1 max-h-56 overflow-y-auto">
                                               {visits.map((v, vIdx) => (
                                                 <div 
                                                   key={`vhist-item-${activeVid}-${vIdx}-${v.timestamp}`}
-                                                  className={`flex items-center justify-between p-2.5 rounded-lg border text-[11px] font-mono ${
-                                                    darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
+                                                  className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-mono ${
+                                                    darkMode ? 'bg-zinc-900/90 border-zinc-800/80 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
                                                   }`}
                                                 >
                                                   <div className="flex items-center gap-2">
                                                     <span className={`w-2 h-2 rounded-full shrink-0 ${vIdx === 0 ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
-                                                    <div className="flex flex-col">
-                                                      <span className="font-bold">{v.timestamp}</span>
-                                                      <span className="text-[10px] text-zinc-500">
-                                                        {vIdx === 0 ? 'Última entrada' : `Ingreso N° ${visits.length - vIdx}`}
-                                                      </span>
-                                                    </div>
+                                                    <span className="font-semibold text-zinc-200">{v.timestamp}</span>
                                                   </div>
-                                                  <span className="px-2 py-0.5 rounded bg-zinc-800 text-cyan-300 text-[10px] border border-zinc-700">
+                                                  <span className="px-2.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-bold text-[11px] border border-cyan-500/20">
                                                     {v.visitedSection || '#inicio'}
                                                   </span>
                                                 </div>
