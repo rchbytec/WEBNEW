@@ -16,16 +16,38 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     if (oldVid !== newVid) {
-      // Check if target newVid already exists in D1
-      const targetExisting = await context.env.DB.prepare(
+      // Check if oldVid exists in D1
+      const oldExisting = await context.env.DB.prepare(
         `SELECT visitor_id FROM visitors WHERE visitor_id = ?`
-      ).bind(newVid).first();
+      ).bind(oldVid).first();
 
-      if (!targetExisting) {
-        // Rename existing record's visitor_id keeping all history, IP, counters intact
+      if (oldExisting) {
+        // Update existing record's visitor_id preserving all metadata
         await context.env.DB.prepare(
           `UPDATE visitors SET visitor_id = ? WHERE visitor_id = ?`
         ).bind(newVid, oldVid).run();
+      } else {
+        // If oldVid wasn't found, check if newVid exists
+        const targetExisting = await context.env.DB.prepare(
+          `SELECT visitor_id FROM visitors WHERE visitor_id = ?`
+        ).bind(newVid).first();
+
+        if (!targetExisting) {
+          const currentTimestamp = new Date().toLocaleString('es-AR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+          });
+          const clientIp = context.request.headers.get('cf-connecting-ip') || 
+                           context.request.headers.get('x-real-ip') || 
+                           '181.16.24.110';
+          const ua = context.request.headers.get('user-agent') || 'Desconocido';
+          const initialHistory = [{ timestamp: currentTimestamp, visitedSection: '#inicio' }];
+
+          await context.env.DB.prepare(`
+            INSERT INTO visitors (visitor_id, ip, first_seen, last_seen, visit_count, device_type, browser, location, last_section, user_agent, visit_history)
+            VALUES (?, ?, ?, ?, 1, 'Escritorio', 'Navegador Web (Escritorio)', 'Argentina', '#inicio', ?, ?)
+          `).bind(newVid, clientIp, currentTimestamp, currentTimestamp, ua, JSON.stringify(initialHistory)).run();
+        }
       }
     }
 

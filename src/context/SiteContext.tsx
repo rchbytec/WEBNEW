@@ -348,17 +348,18 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // 3. Generate if absent
+    // 3. Generate default with vtok_ prefix if absent
     if (!vid) {
-      try {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-          vid = crypto.randomUUID();
-        }
-      } catch (e) {
-        // silent
-      }
-      if (!vid) {
-        vid = 'vtok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      vid = 'vtok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+    }
+
+    // 4. Ensure correct prefix for standard non-admin visitors
+    if (!vid.startsWith('admin_') && !vid.startsWith('vtok_') && !vid.startsWith('vtol_')) {
+      const firstUnderscore = vid.indexOf('_');
+      if (firstUnderscore !== -1) {
+        vid = 'vtok_' + vid.substring(firstUnderscore + 1);
+      } else {
+        vid = 'vtok_' + vid;
       }
     }
 
@@ -531,6 +532,9 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
+    if (isAdminLoggedIn) {
+      promoteVisitorToAdmin();
+    }
   }, [isAdminLoggedIn]);
 
   const updateCompanyInfo = (updated: Partial<SiteData['companyInfo']>) => {

@@ -1591,7 +1591,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 const isAdminVid = String(activeVid).startsWith('admin_');
                                 const isExpanded = expandedVisitorId === activeVid;
                                 const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
-                                const shortVid = activeVid.length > 14 ? `${activeVid.substring(0, 14)}...` : activeVid;
+                                const shortVid = activeVid.length > 28 ? `${activeVid.substring(0, 26)}...` : activeVid;
 
                                 return (
                                   <React.Fragment key={`vlog-frag-${activeVid}-${index}`}>
