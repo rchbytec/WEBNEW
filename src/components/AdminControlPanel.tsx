@@ -1588,9 +1588,10 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                               })
                               .map((log, index) => {
                                 const activeVid = log.visitor_id || log.id || `vlog-${index}`;
+                                const isAdminVid = String(activeVid).startsWith('admin_');
                                 const isExpanded = expandedVisitorId === activeVid;
                                 const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
-                                const shortVid = activeVid.length > 12 ? `${activeVid.substring(0, 12)}...` : activeVid;
+                                const shortVid = activeVid.length > 14 ? `${activeVid.substring(0, 14)}...` : activeVid;
 
                                 return (
                                   <React.Fragment key={`vlog-frag-${activeVid}-${index}`}>
@@ -1600,9 +1601,16 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                         darkMode ? 'text-zinc-300' : 'text-zinc-800'
                                       }`}
                                     >
-                                      <td className="py-2.5 px-3 font-mono font-bold text-cyan-400">
+                                      <td className={`py-2.5 px-3 font-mono font-bold ${isAdminVid ? 'text-red-500 dark:text-red-400' : 'text-cyan-400'}`}>
                                         <div className="flex items-center gap-1.5">
-                                          <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-[11px]" title={`visitor_id completo: ${activeVid} (Clic para ver historial)`}>
+                                          <span 
+                                            className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
+                                              isAdminVid
+                                                ? 'bg-red-500/15 border-red-500/30 text-red-500 dark:text-red-400 font-extrabold'
+                                                : 'bg-cyan-500/10 border-cyan-500/20 text-cyan-400'
+                                            }`} 
+                                            title={`visitor_id completo: ${activeVid} (Clic para ver historial)`}
+                                          >
                                             {shortVid}
                                           </span>
                                           {visits.length > 0 && (
@@ -1643,7 +1651,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                           <div className="space-y-2">
                                             <div className="flex flex-wrap items-center text-xs font-bold text-zinc-400 border-b border-zinc-800/60 pb-2 gap-2">
                                               <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                                              <span>visitor_id: <code className="text-cyan-300 font-mono font-bold">{activeVid}</code></span>
+                                              <span>visitor_id: <code className={`font-mono font-bold ${isAdminVid ? 'text-red-500 dark:text-red-400' : 'text-cyan-300'}`}>{activeVid}</code></span>
                                               <span>— IP: <span className="text-emerald-400 font-mono">{log.ip}</span></span>
                                               <span>— Ubicación: <span className="text-amber-300 font-normal">{log.location || 'Argentina'}</span></span>
                                             </div>

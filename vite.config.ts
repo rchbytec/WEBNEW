@@ -27,6 +27,32 @@ const devVisitorsMiddleware = (): Plugin => {
           return;
         }
 
+        if (req.method === 'POST' && req.url === '/api/visitors/promote') {
+          let bodyStr = '';
+          req.on('data', chunk => bodyStr += chunk);
+          req.on('end', () => {
+            try {
+              const body = JSON.parse(bodyStr || '{}');
+              const { old_visitor_id, new_visitor_id } = body;
+              if (old_visitor_id && new_visitor_id) {
+                const idx = devVisitors.findIndex(v => v.visitor_id === old_visitor_id || v.id === old_visitor_id);
+                if (idx !== -1) {
+                  devVisitors[idx] = {
+                    ...devVisitors[idx],
+                    id: new_visitor_id,
+                    visitor_id: new_visitor_id,
+                    visitorToken: new_visitor_id
+                  };
+                }
+              }
+              res.end(JSON.stringify({ success: true, visitorLogs: devVisitors }));
+            } catch (e) {
+              res.end(JSON.stringify({ success: true, visitorLogs: devVisitors }));
+            }
+          });
+          return;
+        }
+
         if (req.method === 'POST' && req.url === '/api/visitors/register') {
           let bodyStr = '';
           req.on('data', chunk => bodyStr += chunk);

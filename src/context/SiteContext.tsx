@@ -129,6 +129,7 @@ interface SiteContextType {
   setNotificationMsg: (msg: string | null) => void;
   visitorLogs: VisitorLog[];
   clearVisitorLogs: () => void;
+  promoteVisitorToAdmin: () => Promise<string>;
 }
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
@@ -567,6 +568,62 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const promoteVisitorToAdmin = async (): Promise<string> => {
+    const currentVid = getSafeVisitorId();
+    if (currentVid.startsWith('admin_')) {
+      return currentVid;
+    }
+
+    const firstUnderscoreIdx = currentVid.indexOf('_');
+    const suffix = firstUnderscoreIdx !== -1 ? currentVid.substring(firstUnderscoreIdx + 1) : currentVid;
+    const newVid = `admin_${suffix}`;
+
+    try {
+      localStorage.setItem('visitor_id', newVid);
+      localStorage.setItem('rch_visitor_token', newVid);
+      document.cookie = `rbt_vid=${encodeURIComponent(newVid)}; max-age=31536000; path=/; SameSite=Lax`;
+    } catch (e) {}
+
+    setVisitorLogs(prev => {
+      return prev.map(log => {
+        if (log.visitor_id === currentVid || log.id === currentVid) {
+          return {
+            ...log,
+            id: newVid,
+            visitor_id: newVid,
+            visitorToken: newVid
+          };
+        }
+        return log;
+      });
+    });
+
+    try {
+      const res = await fetch('/api/visitors/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          old_visitor_id: currentVid,
+          new_visitor_id: newVid
+        })
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
+        if (data && data.success && Array.isArray(data.visitorLogs)) {
+          setVisitorLogs(data.visitorLogs);
+          try {
+            localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn('Error al promocionar id de visitante a admin:', err);
+    }
+
+    return newVid;
+  };
+
   return (
     <SiteContext.Provider
       value={{
@@ -585,6 +642,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setNotificationMsg,
         visitorLogs,
         clearVisitorLogs,
+        promoteVisitorToAdmin,
       }}
     >
       {children}

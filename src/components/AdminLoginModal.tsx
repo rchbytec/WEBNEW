@@ -15,7 +15,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
     setIsAdminLoggedIn, 
     setIsAdminPanelOpen, 
     siteData,
-    setNotificationMsg 
+    setNotificationMsg,
+    promoteVisitorToAdmin
   } = useSiteContext();
 
   const [email, setEmail] = useState('');
@@ -43,6 +44,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
         email.trim().toLowerCase() === currentAdmin.email.toLowerCase() &&
         password.trim() === currentAdmin.password
       ) {
+        promoteVisitorToAdmin();
         setIsAdminLoggedIn(true);
         setIsLoginModalOpen(false);
         setIsAdminPanelOpen(true);
