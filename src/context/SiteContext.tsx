@@ -314,10 +314,69 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     try {
       localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(visitorLogs));
+      if (typeof BroadcastChannel !== 'undefined') {
+        const bc = new BroadcastChannel('rbt_visitors_sync');
+        bc.postMessage({ type: 'VISITORS_UPDATED', payload: visitorLogs });
+        bc.close();
+      }
     } catch (e) {
       console.error('Failed to save visitor logs', e);
     }
   }, [visitorLogs]);
+
+  // Real-time "en caliente" listener across windows, tabs, and sessions
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === VISITORS_STORAGE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setVisitorLogs(parsed);
+          }
+        } catch (err) {
+          console.error('Error syncing visitors from storage', err);
+        }
+      }
+    };
+
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('rbt_visitors_sync');
+      bc.onmessage = (event) => {
+        if (event.data && event.data.type === 'VISITORS_UPDATED' && Array.isArray(event.data.payload)) {
+          setVisitorLogs(event.data.payload);
+        }
+      };
+    }
+
+    // Polling interval for live updates every 2 seconds
+    const interval = setInterval(() => {
+      try {
+        const raw = localStorage.getItem(VISITORS_STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setVisitorLogs(prev => {
+              if (JSON.stringify(prev) !== raw) {
+                return parsed;
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (err) {
+        // silent catch
+      }
+    }, 2000);
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      if (bc) bc.close();
+      clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
