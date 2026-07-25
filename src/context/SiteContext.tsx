@@ -244,22 +244,50 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem(VISITORS_STORAGE_KEY);
       if (saved) {
-        const parsed: VisitorLog[] = JSON.parse(saved);
-        const filtered = parsed.filter(log => !['vl-101', 'vl-102', 'vl-103', 'vl-104', 'vl-105'].includes(log.id));
-        const seen = new Set<string>();
-        return filtered.map((log, idx) => {
-          let uniqueId = log.id;
-          if (!uniqueId || seen.has(uniqueId)) {
-            uniqueId = `vl-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 6)}`;
+        const parsed: any[] = JSON.parse(saved);
+        const seenIds = new Set<string>();
+        const sanitized: VisitorLog[] = [];
+
+        for (let i = 0; i < parsed.length; i++) {
+          const item = parsed[i];
+          if (!item) continue;
+          if (['vl-101', 'vl-102', 'vl-103', 'vl-104', 'vl-105'].includes(item.id)) {
+            continue;
           }
-          seen.add(uniqueId);
-          return { 
-            ...log, 
-            id: uniqueId,
-            visitCount: log.visitCount || 1,
-            visitHistory: log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }]
-          };
-        });
+
+          const vid = item.visitor_id || item.visitorToken || item.id || `v-${i}-${Date.now()}`;
+          if (seenIds.has(vid)) {
+            continue;
+          }
+          seenIds.add(vid);
+
+          let cleanLoc = item.location || 'Argentina';
+          if (cleanLoc.includes('Neuquén / Buenos Aires') || cleanLoc.includes('Neuquén, Argentina / Buenos Aires')) {
+            cleanLoc = 'Neuquén, Argentina';
+          }
+
+          const firstSeen = item.firstSeen || item.timestamp || new Date().toLocaleString('es-AR');
+          const timestamp = item.timestamp || firstSeen;
+
+          sanitized.push({
+            id: vid,
+            visitor_id: vid,
+            visitorToken: vid,
+            ip: item.ip || '181.16.24.110',
+            firstSeen,
+            timestamp,
+            visitCount: typeof item.visitCount === 'number' ? item.visitCount : 1,
+            visitHistory: Array.isArray(item.visitHistory) && item.visitHistory.length > 0
+              ? item.visitHistory
+              : [{ timestamp, visitedSection: item.visitedSection || '#inicio' }],
+            deviceType: item.deviceType || 'Escritorio',
+            browser: item.browser || 'Chrome',
+            location: cleanLoc,
+            visitedSection: item.visitedSection || '#inicio',
+            userAgent: item.userAgent || ''
+          });
+        }
+        return sanitized;
       }
     } catch (e) {
       console.error('Failed to parse visitor logs', e);
@@ -295,29 +323,103 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
 
-  // Log current session visitor
-  useEffect(() => {
-    const loggedInSession = sessionStorage.getItem('rch_session_logged');
-    if (!loggedInSession) {
-      sessionStorage.setItem('rch_session_logged', 'true');
+  // Real IP Geolocation Lookup
+  const getVisitorLocationData = async (): Promise<{ ip: string; location: string; isp?: string }> => {
+    // 1. Try ipapi.co (detailed city, region, country, org)
+    try {
+      const res = await fetch('https://ipapi.co/json/');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ip && !data.error) {
+          const city = data.city || '';
+          const region = data.region || data.region_code || '';
+          const country = data.country_name || 'Argentina';
+          
+          const parts: string[] = [];
+          if (city) parts.push(city);
+          if (region && region.toLowerCase() !== city.toLowerCase()) parts.push(region);
+          if (country) parts.push(country);
 
-      let visitorToken = localStorage.getItem('rch_visitor_token');
-      if (!visitorToken) {
-        visitorToken = `vtok_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-        localStorage.setItem('rch_visitor_token', visitorToken);
+          const locationStr = parts.length > 0 ? parts.join(', ') : 'Argentina';
+          return { ip: data.ip, location: locationStr, isp: data.org };
+        }
       }
+    } catch (e) {
+      console.warn('ipapi.co fetch failed, trying ipwho.is', e);
+    }
 
-      const ua = navigator.userAgent;
-      let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
-      if (/iPad|Tablet/i.test(ua)) devType = 'Tablet';
-      else if (/Mobi|Android|iPhone/i.test(ua)) devType = 'Móvil';
+    // 2. Try ipwho.is as fallback
+    try {
+      const res = await fetch('https://ipwho.is/');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ip && data.success !== false) {
+          const city = data.city || '';
+          const region = data.region || '';
+          const country = data.country || 'Argentina';
 
-      let browserName = 'Navegador Web';
-      if (ua.includes('Chrome') && !ua.includes('Edg')) browserName = 'Chrome';
-      else if (ua.includes('Safari') && !ua.includes('Chrome')) browserName = 'Safari';
-      else if (ua.includes('Firefox')) browserName = 'Firefox';
-      else if (ua.includes('Edg')) browserName = 'Edge';
+          const parts: string[] = [];
+          if (city) parts.push(city);
+          if (region && region.toLowerCase() !== city.toLowerCase()) parts.push(region);
+          if (country) parts.push(country);
 
+          const locationStr = parts.length > 0 ? parts.join(', ') : 'Argentina';
+          return { ip: data.ip, location: locationStr, isp: data.connection?.isp || data.org };
+        }
+      }
+    } catch (e) {
+      console.warn('ipwho.is fetch failed, trying ipify', e);
+    }
+
+    // 3. Fallback to ipify for IP only
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ip) {
+          return { ip: data.ip, location: 'Argentina' };
+        }
+      }
+    } catch (e) {
+      console.warn('ipify fetch failed', e);
+    }
+
+    return { ip: '190.228.18.42', location: 'Neuquén, Argentina' };
+  };
+
+  // Log current visitor and track section movements
+  useEffect(() => {
+    // Generate Google Analytics-style visitor_id UUID if not exists
+    let visitorId = localStorage.getItem('visitor_id') || localStorage.getItem('rch_visitor_token');
+    if (!visitorId) {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        visitorId = crypto.randomUUID();
+      } else {
+        visitorId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      }
+      localStorage.setItem('visitor_id', visitorId);
+      localStorage.setItem('rch_visitor_token', visitorId);
+    } else {
+      localStorage.setItem('visitor_id', visitorId);
+      localStorage.setItem('rch_visitor_token', visitorId);
+    }
+
+    const ua = navigator.userAgent;
+    let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
+    if (/iPad|Tablet/i.test(ua)) devType = 'Tablet';
+    else if (/Mobi|Android|iPhone/i.test(ua)) devType = 'Móvil';
+
+    let browserName = 'Navegador Web';
+    if (ua.includes('Chrome') && !ua.includes('Edg')) browserName = 'Chrome';
+    else if (ua.includes('Safari') && !ua.includes('Chrome')) browserName = 'Safari';
+    else if (ua.includes('Firefox')) browserName = 'Firefox';
+    else if (ua.includes('Edg')) browserName = 'Edge';
+
+    const recordVisitAction = async (sectionOverride?: string) => {
       const currentTimestamp = new Date().toLocaleString('es-AR', {
         day: '2-digit',
         month: '2-digit',
@@ -326,73 +428,93 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         minute: '2-digit',
         second: '2-digit'
       });
-      const visitedSection = window.location.hash || '#inicio';
+      const visitedSection = sectionOverride || window.location.hash || '#inicio';
 
-      const recordVisit = (
-        vToken: string,
-        ipAddr: string,
-        locationStr: string
-      ) => {
-        setVisitorLogs(prev => {
-          // Check if same visitor exists by visitorToken OR by IP & UserAgent
-          const existingIdx = prev.findIndex(l => 
-            (l.visitorToken && l.visitorToken === vToken) || 
-            (l.ip === ipAddr && l.userAgent === ua)
-          );
+      const { ip: ipAddr, location: locationStr } = await getVisitorLocationData();
 
-          if (existingIdx !== -1) {
-            // Existing visitor returning: update count & add to visitHistory
-            const existing = prev[existingIdx];
-            const newVisitCount = (existing.visitCount || 1) + 1;
-            const newHistoryItem = { timestamp: currentTimestamp, visitedSection };
-            const existingHistory = existing.visitHistory || [{ timestamp: existing.timestamp, visitedSection: existing.visitedSection }];
-            
-            const updatedEntry: VisitorLog = {
-              ...existing,
-              visitorToken: vToken,
-              ip: ipAddr,
-              timestamp: currentTimestamp,
-              visitCount: newVisitCount,
-              visitHistory: [newHistoryItem, ...existingHistory],
-              visitedSection,
-              browser: `${browserName} (${devType})`,
-              deviceType: devType,
-              location: locationStr
-            };
+      setVisitorLogs(prev => {
+        // Find existing visitor log matching visitor_id OR matching IP + UserAgent
+        const existingIdx = prev.findIndex(l => 
+          l.visitor_id === visitorId ||
+          l.id === visitorId ||
+          l.visitorToken === visitorId ||
+          (l.ip === ipAddr && l.userAgent === ua)
+        );
 
-            const updatedLogs = [...prev];
-            updatedLogs.splice(existingIdx, 1);
-            return [updatedEntry, ...updatedLogs];
-          } else {
-            // Brand new visitor!
-            const newEntry: VisitorLog = {
-              id: `vl-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-              visitorToken: vToken,
-              ip: ipAddr,
-              timestamp: currentTimestamp,
-              firstSeen: currentTimestamp,
-              visitCount: 1,
-              visitHistory: [{ timestamp: currentTimestamp, visitedSection }],
-              deviceType: devType,
-              browser: `${browserName} (${devType})`,
-              location: locationStr,
-              visitedSection,
-              userAgent: ua
-            };
-            return [newEntry, ...prev];
+        if (existingIdx !== -1) {
+          // Existing returning visitor
+          const existing = prev[existingIdx];
+          const firstSeen = existing.firstSeen || existing.timestamp || currentTimestamp;
+          
+          const existingHistory = Array.isArray(existing.visitHistory) && existing.visitHistory.length > 0
+            ? existing.visitHistory
+            : [{ timestamp: existing.timestamp || currentTimestamp, visitedSection: existing.visitedSection || '#inicio' }];
+
+          const latestHistorySection = existingHistory[0]?.visitedSection;
+
+          // Check session gap (if visit is more than 3 minutes apart or section hash changed)
+          const isNewSession = !existing.timestamp || (Date.now() - new Date(existing.timestamp).getTime() > 180000);
+          const newVisitCount = isNewSession ? (existing.visitCount || 1) + 1 : (existing.visitCount || 1);
+
+          let newHistory = existingHistory;
+          if (latestHistorySection !== visitedSection || isNewSession) {
+            newHistory = [{ timestamp: currentTimestamp, visitedSection }, ...existingHistory];
           }
-        });
-      };
 
-      fetch('https://api.ipify.org?format=json')
-        .then(res => res.json())
-        .then(data => {
-          recordVisit(visitorToken!, data.ip || '190.228.18.42', 'Neuquén / Buenos Aires, AR');
-        })
-        .catch(() => {
-          recordVisit(visitorToken!, '190.228.18.42 (IP Local)', 'Neuquén, Argentina');
-        });
-    }
+          const updatedEntry: VisitorLog = {
+            ...existing,
+            id: visitorId!,
+            visitor_id: visitorId!,
+            visitorToken: visitorId!,
+            ip: ipAddr,
+            firstSeen,
+            timestamp: currentTimestamp,
+            visitCount: newVisitCount,
+            visitHistory: newHistory,
+            visitedSection,
+            browser: `${browserName} (${devType})`,
+            deviceType: devType,
+            location: locationStr,
+            userAgent: ua
+          };
+
+          const updatedLogs = [...prev];
+          updatedLogs.splice(existingIdx, 1);
+          return [updatedEntry, ...updatedLogs];
+        } else {
+          // First visit for this browser / visitor_id
+          const newEntry: VisitorLog = {
+            id: visitorId!,
+            visitor_id: visitorId!,
+            visitorToken: visitorId!,
+            ip: ipAddr,
+            firstSeen: currentTimestamp,
+            timestamp: currentTimestamp,
+            visitCount: 1,
+            visitHistory: [{ timestamp: currentTimestamp, visitedSection }],
+            deviceType: devType,
+            browser: `${browserName} (${devType})`,
+            location: locationStr,
+            visitedSection,
+            userAgent: ua
+          };
+          return [newEntry, ...prev];
+        }
+      });
+    };
+
+    // Initial visit call
+    recordVisitAction();
+
+    // Listen to section hash changes
+    const handleHashChange = () => {
+      recordVisitAction(window.location.hash);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const updateCompanyInfo = (updated: Partial<SiteData['companyInfo']>) => {

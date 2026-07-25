@@ -173,9 +173,10 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
+    <AnimatePresence key="ap-main-admin">
+      <div key="admin-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
         <motion.div
+          key="admin-modal-card"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
@@ -1401,7 +1402,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         <span>Registro de Visitantes y Direcciones IP</span>
                       </h3>
                       <p className="text-xs text-zinc-400">
-                        Historial en tiempo real de accesos al sitio web, contabilidad de tráfico, direcciones IP y métricas de dispositivos.
+                        Identificador único permanente (<code className="text-emerald-400 font-mono">visitor_id</code>), historial en tiempo real, direcciones IP y métricas de dispositivos.
                       </p>
                     </div>
 
@@ -1430,11 +1431,11 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     </div>
 
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
-                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Dispositivos Únicos</span>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Visitantes Únicos</span>
                       <div className="text-2xl font-black font-mono text-cyan-400">
                         {visitorLogs.length}
                       </div>
-                      <span className="text-[10px] text-zinc-500">Equipos / IPs reconocidos</span>
+                      <span className="text-[10px] text-zinc-500">IDs de Navegador (visitor_id)</span>
                     </div>
 
                     <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
@@ -1471,7 +1472,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                       type="text"
                       value={visitorSearchQuery}
                       onChange={(e) => setVisitorSearchQuery(e.target.value)}
-                      placeholder="Buscar por dirección IP, ciudad, dispositivo o navegador..."
+                      placeholder="Buscar por ID de visitante (visitor_id), dirección IP, ubicación o navegador..."
                       className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs font-medium ${
                         darkMode ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500' : 'bg-white border-zinc-300 text-zinc-900'
                       }`}
@@ -1492,11 +1493,13 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                             <tr className={`text-[11px] font-bold border-b ${
                               darkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
                             }`}>
+                              <th className="py-3 px-4">visitor_id (ID Único)</th>
                               <th className="py-3 px-4">Dirección IP</th>
-                              <th className="py-3 px-4">Estado / Reingresos</th>
-                              <th className="py-3 px-4">Último Acceso</th>
+                              <th className="py-3 px-4">Cantidad</th>
+                              <th className="py-3 px-4">Primera Visita</th>
+                              <th className="py-3 px-4">Última Visita</th>
                               <th className="py-3 px-4">Ubicación</th>
-                              <th className="py-3 px-4">Dispositivo / Navegador</th>
+                              <th className="py-3 px-4">Dispositivo</th>
                               <th className="py-3 px-4 text-center">Historial</th>
                             </tr>
                           </thead>
@@ -1506,12 +1509,14 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 if (!log) return false;
                                 const q = (visitorSearchQuery || '').toLowerCase().trim();
                                 if (!q) return true;
+                                const vid = String(log.visitor_id || log.id || '').toLowerCase();
                                 const ip = String(log.ip || '').toLowerCase();
                                 const loc = String(log.location || '').toLowerCase();
                                 const browser = String(log.browser || '').toLowerCase();
                                 const devType = String(log.deviceType || '').toLowerCase();
                                 const section = String(log.visitedSection || '').toLowerCase();
                                 return (
+                                  vid.includes(q) ||
                                   ip.includes(q) ||
                                   loc.includes(q) ||
                                   browser.includes(q) ||
@@ -1520,13 +1525,19 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 );
                               })
                               .map((log, index) => {
-                                const isExpanded = expandedVisitorId === log.id;
+                                const activeVid = log.visitor_id || log.id || `vlog-${index}`;
+                                const isExpanded = expandedVisitorId === activeVid;
                                 const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
                                 return (
-                                  <React.Fragment key={`admin-vlog-${log.id || 'vl'}-${index}`}>
+                                  <React.Fragment key={`vlog-frag-${activeVid}-${index}`}>
                                     <tr className={`hover:bg-zinc-800/20 transition-colors ${
                                       darkMode ? 'text-zinc-300' : 'text-zinc-800'
                                     }`}>
+                                      <td className="py-3 px-4 font-mono font-bold text-cyan-400">
+                                        <span className="px-2 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20 text-[10px]" title={activeVid}>
+                                          {activeVid.length > 16 ? `${activeVid.substring(0, 16)}...` : activeVid}
+                                        </span>
+                                      </td>
                                       <td className="py-3 px-4 font-mono font-bold text-emerald-400">
                                         {log.ip}
                                       </td>
@@ -1536,12 +1547,13 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                             ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                                             : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                         }`}>
-                                          {(log.visitCount || 1) > 1 
-                                            ? `Volvió a ingresar (${log.visitCount} veces)` 
-                                            : 'Primer ingreso'}
+                                          {log.visitCount || 1} {log.visitCount === 1 ? 'visita' : 'visitas'}
                                         </span>
                                       </td>
-                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-300">
+                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-400">
+                                        {log.firstSeen || log.timestamp}
+                                      </td>
+                                      <td className="py-3 px-4 font-mono text-[11px] text-zinc-200 font-semibold">
                                         {log.timestamp}
                                       </td>
                                       <td className="py-3 px-4 font-semibold text-zinc-300">
@@ -1556,12 +1568,12 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                           ) : (
                                             <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                                           )}
-                                          <span className="truncate max-w-[160px]">{log.browser}</span>
+                                          <span className="truncate max-w-[140px]">{log.browser}</span>
                                         </div>
                                       </td>
                                       <td className="py-3 px-4 text-center">
                                         <button
-                                          onClick={() => setExpandedVisitorId(isExpanded ? null : log.id)}
+                                          onClick={() => setExpandedVisitorId(isExpanded ? null : activeVid)}
                                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[11px] font-semibold border border-zinc-700 transition-colors cursor-pointer"
                                         >
                                           <Clock className="w-3 h-3 text-cyan-400" />
@@ -1572,12 +1584,12 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                     </tr>
                                     {isExpanded && (
                                       <tr className={darkMode ? 'bg-zinc-950/90' : 'bg-zinc-50'}>
-                                        <td colSpan={6} className="p-4 border-b border-zinc-800">
+                                        <td colSpan={8} className="p-4 border-b border-zinc-800">
                                           <div className="space-y-2">
                                             <div className="flex items-center justify-between text-xs font-bold text-zinc-400 border-b border-zinc-800/60 pb-2">
                                               <span className="flex items-center gap-2">
                                                 <Users className="w-3.5 h-3.5 text-cyan-400" />
-                                                Historial Completo de Accesos — IP: {log.ip}
+                                                visitor_id: <code className="text-cyan-300 font-mono font-bold">{activeVid}</code> — IP: {log.ip}
                                               </span>
                                               <span className="text-[11px] font-mono text-zinc-500">
                                                 {log.visitCount || visits.length} ingresos registrados
@@ -1586,7 +1598,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pt-1">
                                               {visits.map((v, vIdx) => (
                                                 <div 
-                                                  key={`vhist-${log.id}-${vIdx}`}
+                                                  key={`vhist-item-${activeVid}-${vIdx}-${v.timestamp}`}
                                                   className={`flex items-center justify-between p-2.5 rounded-lg border text-[11px] font-mono ${
                                                     darkMode ? 'bg-zinc-900/90 border-zinc-800 text-zinc-200' : 'bg-white border-zinc-200 text-zinc-800'
                                                   }`}
@@ -1738,10 +1750,11 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
       </div>
 
       {/* MODAL DE SEGURIDAD: VACIAR REGISTROS DE VISITANTES */}
-      <AnimatePresence>
+      <AnimatePresence key="ap-clear-visitors">
         {showClearVisitorsModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div key="clear-visitors-backdrop" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
+              key="clear-visitors-card"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -1810,10 +1823,11 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
       </AnimatePresence>
 
       {/* MODAL DE SEGURIDAD: RESTAURAR DE FÁBRICA */}
-      <AnimatePresence>
+      <AnimatePresence key="ap-restore-factory">
         {showRestoreFactoryModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div key="restore-factory-backdrop" className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
+              key="restore-factory-card"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}

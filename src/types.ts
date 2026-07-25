@@ -34,6 +34,7 @@ export interface VisitHistoryEntry {
 
 export interface VisitorLog {
   id: string;
+  visitor_id: string;
   ip: string;
   visitorToken?: string;
   timestamp: string;
