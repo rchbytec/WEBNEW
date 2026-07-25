@@ -93,9 +93,13 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({ logoKey, className = "h-8 
 
     case 'dahua':
       return (
-        <svg viewBox="0 0 180 50" className={className} aria-label="Dahua Technology">
-          <text x="90" y="30" textAnchor="middle" fontFamily="sans-serif" fontWeight="900" fontSize="28" fill="currentColor" fontStyle="italic">dahua</text>
-          <text x="90" y="43" textAnchor="middle" fontFamily="sans-serif" fontWeight="700" fontSize="9" fill="#0284C7" letterSpacing="3">TECHNOLOGY</text>
+        <svg viewBox="0 0 200 50" className={className} aria-label="Dahua Technology">
+          <g transform="translate(6, 6)">
+            <path d="M 18,2 C 9.2,2 2,9.2 2,18 C 2,26.8 9.2,34 18,34 C 26.8,34 34,26.8 34,18 L 34,2 L 25,2 L 25,18 C 25,21.9 21.9,25 18,25 C 14.1,25 11,21.9 11,18 C 11,14.1 14.1,11 18,11 L 25,11 L 25,2 Z" fill="#E11D48" />
+            <circle cx="29.5" cy="6.5" r="3.5" fill="#E11D48" />
+          </g>
+          <text x="52" y="31" fontFamily="system-ui, -apple-system, sans-serif" fontWeight="900" fontSize="28" fill="currentColor" fontStyle="italic" letterSpacing="-0.5">dahua</text>
+          <text x="53" y="43" fontFamily="sans-serif" fontWeight="800" fontSize="9" fill="#E11D48" letterSpacing="3">TECHNOLOGY</text>
         </svg>
       );
 

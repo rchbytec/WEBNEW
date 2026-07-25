@@ -129,6 +129,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
   const [emailSending, setEmailSending] = useState(false);
 
   // Security Modals
+  const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
   const [showClearVisitorsModal, setShowClearVisitorsModal] = useState(false);
   const [confirmTextClearVisitors, setConfirmTextClearVisitors] = useState('');
 
@@ -161,6 +162,9 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
       adminCredentials: {
         email: 'admin@rchbytecsrl.com.ar',
         password: 'Admin_123',
+        triggerKeyword: 'admin',
+        requiredClicks: 5,
+        maxClickIntervalSec: 1.5,
         ...(siteData?.adminCredentials || {}),
         ...(data?.adminCredentials || {})
       },
@@ -279,16 +283,11 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               </button>
 
               <button
-                onClick={() => {
-                  if (confirm('¿Desea cerrar la sesión de Administrador?')) {
-                    setIsAdminLoggedIn(false);
-                    setIsAdminPanelOpen(false);
-                  }
-                }}
+                onClick={() => setShowLogoutConfirmModal(true)}
                 className={`p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                   darkMode ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
-                title="Cerrar sesión"
+                title="Cerrar sesión de administrador"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -1769,6 +1768,81 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                       />
                     </div>
 
+                    {/* Secret Trigger Settings */}
+                    <div className="border-t border-zinc-800/60 pt-4 space-y-3">
+                      <div>
+                        <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                          <Lock className="w-3.5 h-3.5" />
+                          <span>Disparador Oculto de Login (Sobre el Logo)</span>
+                        </h4>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          Al hacer los clics requeridos sobre el logo del sitio, este se tornará rojo durante 5 segundos esperando que escriba la palabra clave para desplegar el formulario de login.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Palabra Clave Secret</label>
+                          <input
+                            type="text"
+                            value={formData.adminCredentials.triggerKeyword ?? 'admin'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              adminCredentials: {
+                                ...formData.adminCredentials,
+                                triggerKeyword: e.target.value
+                              }
+                            })}
+                            placeholder="admin"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800 text-amber-400' : 'bg-white border-zinc-300 text-amber-600'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Clics Totales sobre Logo</label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={20}
+                            value={formData.adminCredentials.requiredClicks ?? 5}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              adminCredentials: {
+                                ...formData.adminCredentials,
+                                requiredClicks: parseInt(e.target.value, 10) || 5
+                              }
+                            })}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Máx. Seg. entre Clics</label>
+                          <input
+                            type="number"
+                            step={0.1}
+                            min={0.5}
+                            max={10}
+                            value={formData.adminCredentials.maxClickIntervalSec ?? 1.5}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              adminCredentials: {
+                                ...formData.adminCredentials,
+                                maxClickIntervalSec: parseFloat(e.target.value) || 1.5
+                              }
+                            })}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <button
                       onClick={handleSaveAdminCredentials}
                       disabled={emailSending}
@@ -1944,6 +2018,59 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>Restaurar Fábrica</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Modal Confirmación Cerrar Sesión */}
+        {showLogoutConfirmModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl space-y-4 ${
+                darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-red-500/15 text-red-500 border border-red-500/20">
+                  <LogOut className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">Cerrar Sesión</h3>
+                  <p className="text-xs text-zinc-400">Panel de Control RCH-BYTEC</p>
+                </div>
+              </div>
+
+              <p className="text-sm leading-relaxed">
+                ¿Está seguro de que desea cerrar la sesión de Administrador?
+              </p>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-800/60">
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirmModal(false)}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold border cursor-pointer transition-all ${
+                    darkMode ? 'border-zinc-800 hover:bg-zinc-800 text-zinc-300' : 'border-zinc-300 hover:bg-zinc-100 text-zinc-700'
+                  }`}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowLogoutConfirmModal(false);
+                    setIsAdminLoggedIn(false);
+                    setIsAdminPanelOpen(false);
+                    setNotificationMsg('Sesión de Administrador cerrada correctamente.');
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sí, Cerrar Sesión</span>
                 </button>
               </div>
             </motion.div>

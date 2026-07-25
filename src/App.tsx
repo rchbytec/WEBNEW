@@ -44,6 +44,14 @@ function AppContent() {
     }
   }, [darkMode]);
 
+  useEffect(() => {
+    if (!notificationMsg) return;
+    const timer = setTimeout(() => {
+      setNotificationMsg(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [notificationMsg, setNotificationMsg]);
+
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-zinc-950 text-zinc-100' : 'bg-zinc-50 text-zinc-900'}`}>
       {/* Header */}

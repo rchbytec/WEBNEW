@@ -17,6 +17,9 @@ export interface HeaderNavLink {
 export interface AdminCredentials {
   email: string;
   password: string;
+  triggerKeyword?: string;
+  requiredClicks?: number;
+  maxClickIntervalSec?: number;
 }
 
 export interface SimulatorConfig {
@@ -60,7 +63,7 @@ export interface SiteData {
 const defaultHeaderLinks: HeaderNavLink[] = [
   { id: 'l1', name: 'Inicio', href: '#inicio' },
   { id: 'l2', name: 'Oferta', href: '#oferta' },
-  { id: 'l3', name: 'Demo', href: '#demo' },
+  { id: 'l3', name: 'IoTLab', href: '#demo' },
   { id: 'l4', name: 'Servicios', href: '#servicios' },
   { id: 'l5', name: 'Marcas', href: '#marcas' },
   { id: 'l6', name: 'Ubicación', href: '#ubicacion' },
@@ -70,6 +73,9 @@ const defaultHeaderLinks: HeaderNavLink[] = [
 const defaultAdminCredentials: AdminCredentials = {
   email: 'admin@rchbytecsrl.com.ar',
   password: 'Admin_123',
+  triggerKeyword: 'admin',
+  requiredClicks: 5,
+  maxClickIntervalSec: 1.5,
 };
 
 const defaultSimulatorConfig: SimulatorConfig = {
@@ -178,7 +184,11 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uniqueId = `l-${i}-${Math.random().toString(36).substring(2, 6)}`;
           }
           seenLinks.add(uniqueId);
-          return { ...item, id: uniqueId };
+          let linkName = item.name;
+          if (item.href === '#demo' && (linkName === 'Demo' || linkName === 'Demo Domótica')) {
+            linkName = 'IoTLab';
+          }
+          return { ...item, id: uniqueId, name: linkName };
         });
 
         const seenSlides = new Set<string>();
