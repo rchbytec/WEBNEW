@@ -401,7 +401,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const res = await fetch('/api/visitors');
         if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
               setVisitorLogs(data.visitorLogs);
@@ -491,7 +491,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
           if (data && data.success && Array.isArray(data.visitorLogs)) {
             if (isMounted) {
               setVisitorLogs(data.visitorLogs);

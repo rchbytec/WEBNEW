@@ -1,0 +1,8 @@
+name = "sitio-web"
+pages_build_output_dir = "./dist"
+
+# Configuración del Binding de Cloudflare D1
+[[d1_databases]]
+binding = "DB"
+database_name = "rchbytec-visitors"
+database_id = "bc97ee71-5e94-43ec-a0ee-0bff59424991"
