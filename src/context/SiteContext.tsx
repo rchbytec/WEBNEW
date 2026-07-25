@@ -324,257 +324,122 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [visitorLogs]);
 
-  // Real-time "en caliente" listener across windows, tabs, and sessions
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === VISITORS_STORAGE_KEY && e.newValue) {
-        try {
-          const parsed = JSON.parse(e.newValue);
-          if (Array.isArray(parsed)) {
-            setVisitorLogs(parsed);
-          }
-        } catch (err) {
-          console.error('Error syncing visitors from storage', err);
+  // Helper to safely get or create visitor_id without throwing errors on mobile/safari/incognito
+  const getSafeVisitorId = (): string => {
+    let vid = '';
+    try {
+      vid = localStorage.getItem('visitor_id') || localStorage.getItem('rch_visitor_token') || '';
+    } catch (e) {
+      // storage blocked
+    }
+
+    if (!vid) {
+      try {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+          vid = crypto.randomUUID();
         }
+      } catch (e) {
+        // silent
+      }
+      if (!vid) {
+        vid = 'vtok_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+      }
+      try {
+        localStorage.setItem('visitor_id', vid);
+        localStorage.setItem('rch_visitor_token', vid);
+      } catch (e) {
+        // storage blocked
+      }
+    }
+    return vid;
+  };
+
+  // Synchronize visitors with backend API in real time ("en caliente")
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchVisitorLogsFromServer = async () => {
+      try {
+        const res = await fetch('/api/visitors');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.visitorLogs)) {
+            if (isMounted) {
+              setVisitorLogs(data.visitorLogs);
+              try {
+                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+              } catch (e) {
+                // silent
+              }
+            }
+          }
+        }
+      } catch (e) {
+        // fallback to localStorage sync if server is unreachable
       }
     };
 
-    let bc: BroadcastChannel | null = null;
-    if (typeof BroadcastChannel !== 'undefined') {
-      bc = new BroadcastChannel('rbt_visitors_sync');
-      bc.onmessage = (event) => {
-        if (event.data && event.data.type === 'VISITORS_UPDATED' && Array.isArray(event.data.payload)) {
-          setVisitorLogs(event.data.payload);
-        }
-      };
-    }
+    const registerVisitOnServer = async (sectionOverride?: string) => {
+      const vid = getSafeVisitorId();
+      const currentSection = sectionOverride || window.location.hash || '#inicio';
+      const userAgent = navigator.userAgent;
+      const screenWidth = window.innerWidth;
 
-    // Polling interval for live updates every 2 seconds
-    const interval = setInterval(() => {
       try {
-        const raw = localStorage.getItem(VISITORS_STORAGE_KEY);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            setVisitorLogs(prev => {
-              if (JSON.stringify(prev) !== raw) {
-                return parsed;
+        const res = await fetch('/api/visitors/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            visitor_id: vid,
+            visitedSection: currentSection,
+            userAgent,
+            screenWidth
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.visitorLogs)) {
+            if (isMounted) {
+              setVisitorLogs(data.visitorLogs);
+              try {
+                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+              } catch (e) {
+                // silent
               }
-              return prev;
-            });
+            }
           }
         }
       } catch (err) {
-        // silent catch
+        console.warn('Server register visit failed, falling back to local registration', err);
       }
+    };
+
+    // Initial registration
+    registerVisitOnServer();
+
+    // Poll server every 2 seconds for live real-time updates ("en caliente") across devices
+    const pollInterval = setInterval(() => {
+      fetchVisitorLogsFromServer();
     }, 2000);
 
-    window.addEventListener('storage', handleStorageChange);
+    // Listen to hash section changes
+    const handleHashChange = () => {
+      registerVisitOnServer(window.location.hash);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      if (bc) bc.close();
-      clearInterval(interval);
+      isMounted = false;
+      clearInterval(pollInterval);
+      window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
 
   useEffect(() => {
     localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
-
-  // Real IP Geolocation Lookup
-  const getVisitorLocationData = async (): Promise<{ ip: string; location: string; isp?: string }> => {
-    // 1. Try ipapi.co (detailed city, region, country, org)
-    try {
-      const res = await fetch('https://ipapi.co/json/');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ip && !data.error) {
-          const city = data.city || '';
-          const region = data.region || data.region_code || '';
-          const country = data.country_name || 'Argentina';
-          
-          const parts: string[] = [];
-          if (city) parts.push(city);
-          if (region && region.toLowerCase() !== city.toLowerCase()) parts.push(region);
-          if (country) parts.push(country);
-
-          const locationStr = parts.length > 0 ? parts.join(', ') : 'Argentina';
-          return { ip: data.ip, location: locationStr, isp: data.org };
-        }
-      }
-    } catch (e) {
-      console.warn('ipapi.co fetch failed, trying ipwho.is', e);
-    }
-
-    // 2. Try ipwho.is as fallback
-    try {
-      const res = await fetch('https://ipwho.is/');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ip && data.success !== false) {
-          const city = data.city || '';
-          const region = data.region || '';
-          const country = data.country || 'Argentina';
-
-          const parts: string[] = [];
-          if (city) parts.push(city);
-          if (region && region.toLowerCase() !== city.toLowerCase()) parts.push(region);
-          if (country) parts.push(country);
-
-          const locationStr = parts.length > 0 ? parts.join(', ') : 'Argentina';
-          return { ip: data.ip, location: locationStr, isp: data.connection?.isp || data.org };
-        }
-      }
-    } catch (e) {
-      console.warn('ipwho.is fetch failed, trying ipify', e);
-    }
-
-    // 3. Fallback to ipify for IP only
-    try {
-      const res = await fetch('https://api.ipify.org?format=json');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ip) {
-          return { ip: data.ip, location: 'Argentina' };
-        }
-      }
-    } catch (e) {
-      console.warn('ipify fetch failed', e);
-    }
-
-    return { ip: '190.228.18.42', location: 'Neuquén, Argentina' };
-  };
-
-  // Log current visitor and track section movements
-  useEffect(() => {
-    // Generate Google Analytics-style visitor_id UUID if not exists
-    let visitorId = localStorage.getItem('visitor_id') || localStorage.getItem('rch_visitor_token');
-    if (!visitorId) {
-      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-        visitorId = crypto.randomUUID();
-      } else {
-        visitorId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0;
-          const v = c === 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      }
-      localStorage.setItem('visitor_id', visitorId);
-      localStorage.setItem('rch_visitor_token', visitorId);
-    } else {
-      localStorage.setItem('visitor_id', visitorId);
-      localStorage.setItem('rch_visitor_token', visitorId);
-    }
-
-    const ua = navigator.userAgent;
-    let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
-    if (/iPad|Tablet/i.test(ua)) devType = 'Tablet';
-    else if (/Mobi|Android|iPhone/i.test(ua)) devType = 'Móvil';
-
-    let browserName = 'Navegador Web';
-    if (ua.includes('Chrome') && !ua.includes('Edg')) browserName = 'Chrome';
-    else if (ua.includes('Safari') && !ua.includes('Chrome')) browserName = 'Safari';
-    else if (ua.includes('Firefox')) browserName = 'Firefox';
-    else if (ua.includes('Edg')) browserName = 'Edge';
-
-    const recordVisitAction = async (sectionOverride?: string) => {
-      const currentTimestamp = new Date().toLocaleString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      const visitedSection = sectionOverride || window.location.hash || '#inicio';
-
-      const { ip: ipAddr, location: locationStr } = await getVisitorLocationData();
-
-      setVisitorLogs(prev => {
-        // Find existing visitor log matching visitor_id OR matching IP + UserAgent
-        const existingIdx = prev.findIndex(l => 
-          l.visitor_id === visitorId ||
-          l.id === visitorId ||
-          l.visitorToken === visitorId ||
-          (l.ip === ipAddr && l.userAgent === ua)
-        );
-
-        if (existingIdx !== -1) {
-          // Existing returning visitor
-          const existing = prev[existingIdx];
-          const firstSeen = existing.firstSeen || existing.timestamp || currentTimestamp;
-          
-          const existingHistory = Array.isArray(existing.visitHistory) && existing.visitHistory.length > 0
-            ? existing.visitHistory
-            : [{ timestamp: existing.timestamp || currentTimestamp, visitedSection: existing.visitedSection || '#inicio' }];
-
-          const latestHistorySection = existingHistory[0]?.visitedSection;
-
-          // Check session gap (if visit is more than 3 minutes apart or section hash changed)
-          const isNewSession = !existing.timestamp || (Date.now() - new Date(existing.timestamp).getTime() > 180000);
-          const newVisitCount = isNewSession ? (existing.visitCount || 1) + 1 : (existing.visitCount || 1);
-
-          let newHistory = existingHistory;
-          if (latestHistorySection !== visitedSection || isNewSession) {
-            newHistory = [{ timestamp: currentTimestamp, visitedSection }, ...existingHistory];
-          }
-
-          const updatedEntry: VisitorLog = {
-            ...existing,
-            id: visitorId!,
-            visitor_id: visitorId!,
-            visitorToken: visitorId!,
-            ip: ipAddr,
-            firstSeen,
-            timestamp: currentTimestamp,
-            visitCount: newVisitCount,
-            visitHistory: newHistory,
-            visitedSection,
-            browser: `${browserName} (${devType})`,
-            deviceType: devType,
-            location: locationStr,
-            userAgent: ua
-          };
-
-          const updatedLogs = [...prev];
-          updatedLogs.splice(existingIdx, 1);
-          return [updatedEntry, ...updatedLogs];
-        } else {
-          // First visit for this browser / visitor_id
-          const newEntry: VisitorLog = {
-            id: visitorId!,
-            visitor_id: visitorId!,
-            visitorToken: visitorId!,
-            ip: ipAddr,
-            firstSeen: currentTimestamp,
-            timestamp: currentTimestamp,
-            visitCount: 1,
-            visitHistory: [{ timestamp: currentTimestamp, visitedSection }],
-            deviceType: devType,
-            browser: `${browserName} (${devType})`,
-            location: locationStr,
-            visitedSection,
-            userAgent: ua
-          };
-          return [newEntry, ...prev];
-        }
-      });
-    };
-
-    // Initial visit call
-    recordVisitAction();
-
-    // Listen to section hash changes
-    const handleHashChange = () => {
-      recordVisitAction(window.location.hash);
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
 
   const updateCompanyInfo = (updated: Partial<SiteData['companyInfo']>) => {
     setSiteData((prev) => ({
@@ -603,7 +468,12 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearVisitorLogs = () => {
     setVisitorLogs([]);
-    localStorage.removeItem(VISITORS_STORAGE_KEY);
+    try {
+      localStorage.removeItem(VISITORS_STORAGE_KEY);
+      fetch('/api/visitors', { method: 'DELETE' }).catch(() => {});
+    } catch (e) {
+      // silent
+    }
   };
 
   return (
