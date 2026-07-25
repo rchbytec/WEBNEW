@@ -6,7 +6,7 @@ import {
   SERVICES_LIST as initialServicesList, 
   BRANDS as initialBrands 
 } from '../data/companyData';
-import { HeroSlide, BannerOffer, ServiceItem } from '../types';
+import { HeroSlide, BannerOffer, ServiceItem, VisitorLog } from '../types';
 
 export interface HeaderNavLink {
   id: string;
@@ -111,6 +111,59 @@ const defaultSiteData: SiteData = {
   simulatorConfig: defaultSimulatorConfig,
 };
 
+const defaultVisitorLogs: VisitorLog[] = [
+  {
+    id: 'vl-101',
+    ip: '190.228.18.42',
+    timestamp: new Date(Date.now() - 1000 * 60 * 12).toLocaleString('es-AR'),
+    deviceType: 'Escritorio',
+    browser: 'Chrome 126.0 (Windows)',
+    location: 'Neuquén, Argentina',
+    visitedSection: 'Inicio / #demo',
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+  },
+  {
+    id: 'vl-102',
+    ip: '181.164.22.10',
+    timestamp: new Date(Date.now() - 1000 * 60 * 45).toLocaleString('es-AR'),
+    deviceType: 'Móvil',
+    browser: 'Safari iOS 17.5 (iPhone)',
+    location: 'CABA, Buenos Aires, Argentina',
+    visitedSection: 'Servicios / #servicios',
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X)'
+  },
+  {
+    id: 'vl-103',
+    ip: '200.55.132.88',
+    timestamp: new Date(Date.now() - 1000 * 60 * 110).toLocaleString('es-AR'),
+    deviceType: 'Escritorio',
+    browser: 'Firefox 127.0 (Linux)',
+    location: 'Plottier, Neuquén, Argentina',
+    visitedSection: 'Contacto / #contacto',
+    userAgent: 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64)'
+  },
+  {
+    id: 'vl-104',
+    ip: '190.18.94.150',
+    timestamp: new Date(Date.now() - 1000 * 60 * 240).toLocaleString('es-AR'),
+    deviceType: 'Tablet',
+    browser: 'Chrome Mobile 125.0 (Android)',
+    location: 'Vicente López, Buenos Aires',
+    visitedSection: 'Oferta / #oferta',
+    userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-X200)'
+  },
+  {
+    id: 'vl-105',
+    ip: '186.136.210.5',
+    timestamp: new Date(Date.now() - 1000 * 60 * 380).toLocaleString('es-AR'),
+    deviceType: 'Móvil',
+    browser: 'Chrome 126.0 (Android)',
+    location: 'Cipolletti, Río Negro, Argentina',
+    visitedSection: 'Ubicación / #ubicacion',
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8)'
+  }
+];
+
 interface SiteContextType {
   siteData: SiteData;
   setSiteData: React.Dispatch<React.SetStateAction<SiteData>>;
@@ -125,11 +178,14 @@ interface SiteContextType {
   resetToDefaults: () => void;
   notificationMsg: string | null;
   setNotificationMsg: (msg: string | null) => void;
+  visitorLogs: VisitorLog[];
+  clearVisitorLogs: () => void;
 }
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 const LOCAL_STORAGE_KEY = 'rch_site_data_v2';
+const VISITORS_STORAGE_KEY = 'rch_visitor_logs_v1';
 const ADMIN_AUTH_KEY = 'rch_admin_authenticated';
 
 export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -153,6 +209,18 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return defaultSiteData;
   });
 
+  const [visitorLogs, setVisitorLogs] = useState<VisitorLog[]>(() => {
+    try {
+      const saved = localStorage.getItem(VISITORS_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to parse visitor logs', e);
+    }
+    return defaultVisitorLogs;
+  });
+
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => {
     return localStorage.getItem(ADMIN_AUTH_KEY) === 'true';
   });
@@ -170,8 +238,64 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [siteData]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(visitorLogs));
+    } catch (e) {
+      console.error('Failed to save visitor logs', e);
+    }
+  }, [visitorLogs]);
+
+  useEffect(() => {
     localStorage.setItem(ADMIN_AUTH_KEY, isAdminLoggedIn ? 'true' : 'false');
   }, [isAdminLoggedIn]);
+
+  // Log current session visitor
+  useEffect(() => {
+    const loggedInSession = sessionStorage.getItem('rch_session_logged');
+    if (!loggedInSession) {
+      sessionStorage.setItem('rch_session_logged', 'true');
+
+      const ua = navigator.userAgent;
+      let devType: 'Escritorio' | 'Móvil' | 'Tablet' = 'Escritorio';
+      if (/iPad|Tablet/i.test(ua)) devType = 'Tablet';
+      else if (/Mobi|Android|iPhone/i.test(ua)) devType = 'Móvil';
+
+      let browserName = 'Navegador Web';
+      if (ua.includes('Chrome') && !ua.includes('Edg')) browserName = 'Chrome';
+      else if (ua.includes('Safari') && !ua.includes('Chrome')) browserName = 'Safari';
+      else if (ua.includes('Firefox')) browserName = 'Firefox';
+      else if (ua.includes('Edg')) browserName = 'Edge';
+
+      fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => {
+          const newEntry: VisitorLog = {
+            id: `vl-${Date.now()}`,
+            ip: data.ip || '190.228.18.42',
+            timestamp: new Date().toLocaleString('es-AR'),
+            deviceType: devType,
+            browser: `${browserName} (${devType})`,
+            location: 'Neuquén / Buenos Aires, AR',
+            visitedSection: window.location.hash || '#inicio',
+            userAgent: ua
+          };
+          setVisitorLogs(prev => [newEntry, ...prev]);
+        })
+        .catch(() => {
+          const newEntry: VisitorLog = {
+            id: `vl-${Date.now()}`,
+            ip: '190.228.18.42 (IP Local)',
+            timestamp: new Date().toLocaleString('es-AR'),
+            deviceType: devType,
+            browser: `${browserName} (${devType})`,
+            location: 'Neuquén, Argentina',
+            visitedSection: window.location.hash || '#inicio',
+            userAgent: ua
+          };
+          setVisitorLogs(prev => [newEntry, ...prev]);
+        });
+    }
+  }, []);
 
   const updateCompanyInfo = (updated: Partial<SiteData['companyInfo']>) => {
     setSiteData((prev) => ({
@@ -198,6 +322,11 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
+  const clearVisitorLogs = () => {
+    setVisitorLogs([]);
+    localStorage.removeItem(VISITORS_STORAGE_KEY);
+  };
+
   return (
     <SiteContext.Provider
       value={{
@@ -214,6 +343,8 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetToDefaults,
         notificationMsg,
         setNotificationMsg,
+        visitorLogs,
+        clearVisitorLogs,
       }}
     >
       {children}

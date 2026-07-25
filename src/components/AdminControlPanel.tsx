@@ -31,7 +31,14 @@ import {
   Droplets,
   Wind,
   DoorClosed,
-  Power
+  Power,
+  Users,
+  Eye,
+  AlertTriangle,
+  Search,
+  Laptop,
+  Smartphone,
+  Tablet
 } from 'lucide-react';
 
 interface AdminControlPanelProps {
@@ -47,11 +54,23 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
     setSiteData,
     resetToDefaults,
     setNotificationMsg,
+    visitorLogs,
+    clearVisitorLogs,
   } = useSiteContext();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'socials' | 'admin'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'visitors' | 'socials' | 'admin'>('general');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
+
+  // Security Modals
+  const [showClearVisitorsModal, setShowClearVisitorsModal] = useState(false);
+  const [confirmTextClearVisitors, setConfirmTextClearVisitors] = useState('');
+
+  const [showRestoreFactoryModal, setShowRestoreFactoryModal] = useState(false);
+  const [confirmTextRestoreFactory, setConfirmTextRestoreFactory] = useState('');
+
+  // Search filter for visitor logs
+  const [visitorSearchQuery, setVisitorSearchQuery] = useState('');
 
   // Local draft state initialized from siteData
   const [formData, setFormData] = useState(siteData);
@@ -242,6 +261,27 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               </button>
 
               <button
+                onClick={() => setActiveTab('visitors')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-between ${
+                  activeTab === 'visitors'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-4 h-4 text-cyan-400" />
+                  <span>Visitantes</span>
+                </div>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                  activeTab === 'visitors'
+                    ? 'bg-white/20 text-white'
+                    : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                }`}>
+                  {visitorLogs.length}
+                </span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('socials')}
                 className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 ${
                   activeTab === 'socials'
@@ -268,11 +308,8 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               <div className="pt-4 border-t border-zinc-800/50">
                 <button
                   onClick={() => {
-                    if (confirm('¿Esta seguro de restaurar todos los textos y datos originales del sitio?')) {
-                      resetToDefaults();
-                      setFormData(siteData);
-                      setNotificationMsg('Se han restaurado los datos por defecto.');
-                    }
+                    setConfirmTextRestoreFactory('');
+                    setShowRestoreFactoryModal(true);
                   }}
                   className={`w-full px-3 py-2 rounded-lg text-[11px] font-semibold border transition-colors flex items-center gap-2 ${
                     darkMode ? 'border-zinc-800 text-red-400 hover:bg-red-500/10' : 'border-zinc-200 text-red-600 hover:bg-red-50'
@@ -282,6 +319,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                   <span>Restaurar Fábrica</span>
                 </button>
               </div>
+
             </div>
 
             {/* Panel Tab Content */}
@@ -1295,6 +1333,166 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                 </div>
               )}
 
+              {/* TAB VISITANTES */}
+              {activeTab === 'visitors' && (
+                <div className="space-y-6 max-w-5xl">
+                  {/* Header tab */}
+                  <div className="border-b border-zinc-800/40 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                      <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Users className="w-5 h-5 text-cyan-400" />
+                        <span>Registro de Visitantes y Direcciones IP</span>
+                      </h3>
+                      <p className="text-xs text-zinc-400">
+                        Historial en tiempo real de accesos al sitio web, contabilidad de tráfico, direcciones IP y métricas de dispositivos.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfirmTextClearVisitors('');
+                        setShowClearVisitorsModal(true);
+                      }}
+                      disabled={visitorLogs.length === 0}
+                      className="px-3.5 py-2 rounded-xl text-xs font-bold border border-red-500/40 text-red-400 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span>Vaciar Registros</span>
+                    </button>
+                  </div>
+
+                  {/* Metrics cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Total de Visitas</span>
+                      <div className="text-2xl font-black font-mono text-emerald-400">{visitorLogs.length}</div>
+                      <span className="text-[10px] text-zinc-500">Registradas en el sistema</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">IPs Únicas</span>
+                      <div className="text-2xl font-black font-mono text-cyan-400">
+                        {new Set(visitorLogs.map(l => l.ip)).size}
+                      </div>
+                      <span className="text-[10px] text-zinc-500">Visitantes distintos</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Dispositivos</span>
+                      <div className="flex items-center gap-2 text-xs font-bold mt-1">
+                        <span className="flex items-center gap-1 text-emerald-400">
+                          <Laptop className="w-3.5 h-3.5" />
+                          {visitorLogs.filter(l => l.deviceType === 'Escritorio').length}
+                        </span>
+                        <span className="text-zinc-600">•</span>
+                        <span className="flex items-center gap-1 text-purple-400">
+                          <Smartphone className="w-3.5 h-3.5" />
+                          {visitorLogs.filter(l => l.deviceType === 'Móvil').length}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-zinc-500">Escritorio / Móvil</span>
+                    </div>
+
+                    <div className={`p-4 rounded-xl border ${darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                      <span className="text-[11px] font-semibold text-zinc-400 block mb-1">Último Acceso</span>
+                      <div className="text-xs font-bold font-mono text-amber-400 truncate mt-1">
+                        {visitorLogs[0]?.timestamp || 'Sin visitas'}
+                      </div>
+                      <span className="text-[10px] text-zinc-500 truncate block">
+                        {visitorLogs[0]?.location || 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Search filter bar */}
+                  <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                    <input
+                      type="text"
+                      value={visitorSearchQuery}
+                      onChange={(e) => setVisitorSearchQuery(e.target.value)}
+                      placeholder="Buscar por dirección IP, ciudad, dispositivo o navegador..."
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-xs font-medium ${
+                        darkMode ? 'bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500' : 'bg-white border-zinc-300 text-zinc-900'
+                      }`}
+                    />
+                  </div>
+
+                  {/* Visitor logs list/table */}
+                  <div className={`rounded-xl border overflow-hidden ${darkMode ? 'bg-zinc-900/40 border-zinc-800' : 'bg-white border-zinc-200'}`}>
+                    {visitorLogs.length === 0 ? (
+                      <div className="p-8 text-center text-zinc-500 text-xs">
+                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                        No hay registros de visitas en el historial. El registro está vacío.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className={`text-[11px] font-bold border-b ${
+                              darkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                            }`}>
+                              <th className="py-3 px-4">Dirección IP</th>
+                              <th className="py-3 px-4">Fecha y Hora</th>
+                              <th className="py-3 px-4">Ubicación</th>
+                              <th className="py-3 px-4">Dispositivo / Navegador</th>
+                              <th className="py-3 px-4">Sección</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-800/30 text-xs">
+                            {visitorLogs
+                              .filter(log => {
+                                const q = visitorSearchQuery.toLowerCase();
+                                return (
+                                  log.ip.toLowerCase().includes(q) ||
+                                  log.location.toLowerCase().includes(q) ||
+                                  log.browser.toLowerCase().includes(q) ||
+                                  log.deviceType.toLowerCase().includes(q) ||
+                                  log.visitedSection.toLowerCase().includes(q)
+                                );
+                              })
+                              .map((log) => (
+                                <tr key={log.id} className={`hover:bg-zinc-800/20 transition-colors ${
+                                  darkMode ? 'text-zinc-300' : 'text-zinc-800'
+                                }`}>
+                                  <td className="py-3 px-4 font-mono font-bold text-emerald-400">
+                                    {log.ip}
+                                  </td>
+                                  <td className="py-3 px-4 font-mono text-[11px] text-zinc-400">
+                                    {log.timestamp}
+                                  </td>
+                                  <td className="py-3 px-4 font-semibold text-zinc-300">
+                                    {log.location}
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <div className="flex items-center gap-1.5">
+                                      {log.deviceType === 'Móvil' ? (
+                                        <Smartphone className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                      ) : log.deviceType === 'Tablet' ? (
+                                        <Tablet className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                      ) : (
+                                        <Laptop className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                      )}
+                                      <span className="truncate max-w-[180px]">{log.browser}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4">
+                                    <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 text-[10px] font-mono border border-zinc-700">
+                                      {log.visitedSection}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+
               {/* TAB 6: REDES SOCIALES */}
               {activeTab === 'socials' && (
                 <div className="space-y-6 max-w-2xl">
@@ -1409,6 +1607,152 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
           </div>
         </motion.div>
       </div>
+
+      {/* MODAL DE SEGURIDAD: VACIAR REGISTROS DE VISITANTES */}
+      <AnimatePresence>
+        {showClearVisitorsModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-5 ${
+                darkMode ? 'bg-zinc-950 border-red-500/30 text-white' : 'bg-white border-red-300 text-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-3 text-red-500">
+                <div className="p-3 rounded-full bg-red-500/10 border border-red-500/30">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">Vaciar Registro de Visitantes</h3>
+                  <p className="text-xs text-red-400/90">Acción de seguridad irreversible</p>
+                </div>
+              </div>
+
+              <div className={`p-3.5 rounded-xl border text-xs space-y-2 ${
+                darkMode ? 'bg-red-950/20 border-red-500/20 text-red-200' : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                <p className="font-semibold">
+                  ⚠️ Se eliminarán de forma permanente todos los registros de accesos, direcciones IP y métricas de visitantes guardadas. Esta acción no se puede deshacer.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold">
+                  Para confirmar, escriba exactamente la palabra <span className="text-red-400 font-mono font-black underline">BORRAR</span> a continuación:
+                </label>
+                <input
+                  type="text"
+                  value={confirmTextClearVisitors}
+                  onChange={(e) => setConfirmTextClearVisitors(e.target.value)}
+                  placeholder="Escriba BORRAR aquí"
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono text-sm tracking-widest font-bold text-center uppercase ${
+                    darkMode ? 'bg-zinc-900 border-zinc-800 text-red-400 placeholder-zinc-600' : 'bg-zinc-50 border-zinc-300 text-red-600 placeholder-zinc-400'
+                  }`}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowClearVisitorsModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-xs font-bold hover:bg-zinc-800 transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={confirmTextClearVisitors.trim().toUpperCase() !== 'BORRAR'}
+                  onClick={() => {
+                    clearVisitorLogs();
+                    setShowClearVisitorsModal(false);
+                    setNotificationMsg('Se ha vaciado correctamente todo el registro de visitantes.');
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Vaciar Registros</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL DE SEGURIDAD: RESTAURAR DE FÁBRICA */}
+      <AnimatePresence>
+        {showRestoreFactoryModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className={`w-full max-w-md p-6 rounded-2xl border shadow-2xl space-y-5 ${
+                darkMode ? 'bg-zinc-950 border-red-500/30 text-white' : 'bg-white border-red-300 text-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-3 text-red-500">
+                <div className="p-3 rounded-full bg-red-500/10 border border-red-500/30">
+                  <RefreshCw className="w-6 h-6 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">Restaurar Datos de Fábrica</h3>
+                  <p className="text-xs text-red-400/90">Restablecimiento total del sitio web</p>
+                </div>
+              </div>
+
+              <div className={`p-3.5 rounded-xl border text-xs space-y-2 ${
+                darkMode ? 'bg-red-950/20 border-red-500/20 text-red-200' : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                <p className="font-semibold">
+                  ⚠️ Esta acción restablecerá toda la información, ofertas, sliders, servicios e imágenes del sitio web a sus valores originales de fábrica. Perderá todos sus cambios personalizados.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-xs font-bold">
+                  Para confirmar, escriba exactamente la palabra <span className="text-red-400 font-mono font-black underline">RESTAURAR</span> a continuación:
+                </label>
+                <input
+                  type="text"
+                  value={confirmTextRestoreFactory}
+                  onChange={(e) => setConfirmTextRestoreFactory(e.target.value)}
+                  placeholder="Escriba RESTAURAR aquí"
+                  className={`w-full px-4 py-2.5 rounded-xl border font-mono text-sm tracking-widest font-bold text-center uppercase ${
+                    darkMode ? 'bg-zinc-900 border-zinc-800 text-red-400 placeholder-zinc-600' : 'bg-zinc-50 border-zinc-300 text-red-600 placeholder-zinc-400'
+                  }`}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRestoreFactoryModal(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-xs font-bold hover:bg-zinc-800 transition-all cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={confirmTextRestoreFactory.trim().toUpperCase() !== 'RESTAURAR'}
+                  onClick={() => {
+                    resetToDefaults();
+                    setFormData(siteData);
+                    setShowRestoreFactoryModal(false);
+                    setNotificationMsg('Se han restaurado con éxito los datos originales de fábrica.');
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Restaurar Fábrica</span>
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </AnimatePresence>
   );
 };

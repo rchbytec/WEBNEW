@@ -47,3 +47,14 @@ export interface EmailJSConfig {
   templateId: string;
   publicKey: string;
 }
+
+export interface VisitorLog {
+  id: string;
+  ip: string;
+  timestamp: string;
+  deviceType: 'Escritorio' | 'Móvil' | 'Tablet';
+  browser: string;
+  location: string;
+  visitedSection: string;
+  userAgent?: string;
+}
