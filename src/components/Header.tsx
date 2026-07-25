@@ -149,11 +149,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
               className={`flex items-center gap-2.5 group cursor-pointer select-none transition-all duration-300 ${
                 isRedActive ? 'scale-105' : ''
               }`}
-              title={
-                isRedActive 
-                  ? `MODO CLAVE ACTIVO (${redTimeLeft}s): Escriba '${triggerKeyword}' para acceder` 
-                  : `RCH-BYTEC (Haga ${requiredClicks} clics rápidos sobre el logo para activar clave admin)`
-              }
+              title={companyInfo.fullName || 'RCH-BYTEC SRL'}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
@@ -172,10 +168,10 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 </div>
                 <span className={`text-[10.2px] sm:text-[11.1px] font-semibold tracking-[0.025em] uppercase mt-1 leading-none block whitespace-nowrap transition-colors duration-300 ${
                   isRedActive 
-                    ? 'text-red-500 dark:text-red-400 font-extrabold' 
+                    ? 'text-red-500 dark:text-red-400 font-extrabold animate-pulse' 
                     : darkMode ? 'text-zinc-400' : 'text-zinc-500'
                 }`}>
-                  {isRedActive ? `ESCRIBA: ${triggerKeyword.toUpperCase()}` : (companyInfo.slogan || 'Tu Asesor Tecnológico')}
+                  {companyInfo.slogan || 'Tu Asesor Tecnológico'}
                 </span>
               </div>
             </div>
