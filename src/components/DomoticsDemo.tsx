@@ -454,19 +454,19 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
   // Renderer for Event Logs Terminal
   const renderEventLogs = () => (
-    <div className="mt-4 pt-3 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3 flex-1 flex flex-col justify-between min-h-[110px]">
-      <div className="flex items-center justify-between mb-2">
+    <div className="mt-4 pt-3 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3 shrink-0 h-[135px] flex flex-col justify-between">
+      <div className="flex items-center justify-between mb-2 shrink-0">
         <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
           <Activity className="w-3.5 h-3.5 text-emerald-400" />
           LOG DE EVENTOS EN TIEMPO REAL
         </span>
         <span className="text-[10px] text-zinc-600 font-mono">RBT OS v4.2</span>
       </div>
-      <div className="space-y-1 max-h-24 overflow-y-auto font-mono text-[11px]">
+      <div className="space-y-1 h-[85px] overflow-y-auto font-mono text-[11px] pr-1">
         {logs.map((log, index) => (
           <div key={`demo-log-${log.id || 'l'}-${index}`} className="flex items-center gap-2 text-zinc-300">
-            <span className="text-zinc-500 font-semibold">{log.time}</span>
-            <span className={log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}>
+            <span className="text-zinc-500 font-semibold shrink-0">{log.time}</span>
+            <span className={`truncate ${log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}`}>
               {log.text}
             </span>
           </div>
