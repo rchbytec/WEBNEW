@@ -47,6 +47,23 @@ interface AdminControlPanelProps {
   darkMode: boolean;
 }
 
+const formatDisplayVisitorId = (rawVid: string): string => {
+  if (!rawVid) return '';
+  let formatted = rawVid;
+  if (formatted.startsWith('admin_')) {
+    formatted = 'adm_' + formatted.slice(6);
+  } else if (formatted.startsWith('vtok_')) {
+    formatted = 'vtk_' + formatted.slice(5);
+  } else if (formatted.startsWith('vtol_')) {
+    formatted = 'vtk_' + formatted.slice(5);
+  }
+
+  if (formatted.length > 24) {
+    return formatted.substring(0, 21) + '...';
+  }
+  return formatted;
+};
+
 const formatAbbreviatedLocation = (locStr?: string): string => {
   if (!locStr) return 'AR';
   const rawParts = locStr.split(',').map(p => p.trim()).filter(Boolean);
@@ -1571,6 +1588,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 const q = (visitorSearchQuery || '').toLowerCase().trim();
                                 if (!q) return true;
                                 const vid = String(log.visitor_id || log.id || '').toLowerCase();
+                                const displayVid = formatDisplayVisitorId(vid).toLowerCase();
                                 const ip = String(log.ip || '').toLowerCase();
                                 const loc = String(log.location || '').toLowerCase();
                                 const browser = String(log.browser || '').toLowerCase();
@@ -1578,6 +1596,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                                 const section = String(log.visitedSection || '').toLowerCase();
                                 return (
                                   vid.includes(q) ||
+                                  displayVid.includes(q) ||
                                   ip.includes(q) ||
                                   loc.includes(q) ||
                                   browser.includes(q) ||
@@ -1587,10 +1606,10 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                               })
                               .map((log, index) => {
                                 const activeVid = log.visitor_id || log.id || `vlog-${index}`;
-                                const isAdminVid = String(activeVid).startsWith('admin_');
+                                const isAdminVid = String(activeVid).startsWith('admin_') || String(activeVid).startsWith('adm_');
                                 const isExpanded = expandedVisitorId === activeVid;
                                 const visits = log.visitHistory || [{ timestamp: log.timestamp, visitedSection: log.visitedSection || '#inicio' }];
-                                const shortVid = activeVid.length > 28 ? `${activeVid.substring(0, 26)}...` : activeVid;
+                                const shortVid = formatDisplayVisitorId(activeVid);
 
                                 return (
                                   <React.Fragment key={`vlog-frag-${activeVid}-${index}`}>
