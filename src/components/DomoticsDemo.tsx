@@ -191,17 +191,12 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
     );
   };
 
-  const getLightGradient = () => {
-    if (!lightsOn) return 'rgba(9, 9, 11, 0.95)';
-    const opacity = (lightBrightness / 100) * 0.65;
+  const getInteriorColorHex = () => {
     switch (lightColor) {
-      case 'neutral':
-        return `rgba(254, 240, 138, ${opacity})`;
-      case 'cool':
-        return `rgba(56, 189, 248, ${opacity})`;
+      case 'neutral': return '#fef08a';
+      case 'cool': return '#38bdf8';
       case 'warm':
-      default:
-        return `rgba(251, 191, 36, ${opacity})`;
+      default: return '#fbbf24';
     }
   };
 
@@ -209,19 +204,11 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   const renderHouseSVG = (isCompactMobile = false) => (
     <div className={`relative w-full rounded-xl overflow-hidden border border-zinc-800 transition-all duration-500 flex items-center justify-center ${
       activeScenario === 'day'
-        ? 'bg-gradient-to-b from-sky-950/40 via-zinc-950 to-zinc-950'
-        : 'bg-gradient-to-b from-indigo-950/60 via-zinc-950 to-black'
+        ? 'bg-gradient-to-b from-sky-900/40 via-zinc-950 to-zinc-950'
+        : 'bg-gradient-to-b from-indigo-950/70 via-zinc-950 to-black'
     } ${
       isCompactMobile ? 'h-[190px]' : 'h-[250px] sm:h-[265px]'
     }`}>
-      {/* Dynamic Room Interior Lighting Overlay Gradient */}
-      <div 
-        className="absolute inset-0 transition-all duration-700 pointer-events-none z-10"
-        style={{
-          background: `radial-gradient(circle at 45% 35%, ${getLightGradient()} 0%, rgba(9, 9, 11, 0.85) 100%)`
-        }}
-      />
-
       {/* Water Pump Flow Animation Stream (Irrigation Drops at Bottom) */}
       <AnimatePresence>
         {waterPumpOn && (
@@ -358,6 +345,20 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         <g transform="translate(65, 122)">
           <rect x="0" y="0" width="180" height="150" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
           
+          {/* Dynamic Interior Room Lighting Glow Overlay */}
+          {lightsOn && (
+            <rect 
+              x="1" 
+              y="1" 
+              width="178" 
+              height="148" 
+              rx="3" 
+              fill={getInteriorColorHex()} 
+              opacity={(lightBrightness / 100) * 0.38} 
+              className="transition-all duration-300 pointer-events-none" 
+            />
+          )}
+
           {/* Windows & Motorized Vertical Roller Curtain (Bajada) */}
           <rect x="8" y="48" width="82" height="64" rx="3" fill="#09090b" stroke="#3f3f46" strokeWidth="1.5" />
           
@@ -397,11 +398,23 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           <circle 
             cx="140" 
             cy="32" 
-            r="15" 
-            fill={lightsOn ? (lightColor === 'cool' ? '#38bdf8' : lightColor === 'neutral' ? '#fef08a' : '#fbbf24') : '#27272a'} 
-            opacity={lightsOn ? lightBrightness / 100 : 0.3} 
+            r="14" 
+            fill={lightsOn ? getInteriorColorHex() : '#27272a'} 
+            opacity={lightsOn ? Math.max(0.4, lightBrightness / 100) : 0.3} 
           />
-          <text x="140" y="36" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="9.5" fontWeight="bold">
+          {lightsOn && (
+            <circle 
+              cx="140" 
+              cy="32" 
+              r="20" 
+              fill="none" 
+              stroke={getInteriorColorHex()} 
+              strokeWidth="1" 
+              opacity={lightBrightness / 100} 
+              className="animate-pulse" 
+            />
+          )}
+          <text x="140" y="36" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="9" fontWeight="bold">
             {lightsOn ? `${lightBrightness}%` : 'OFF'}
           </text>
 
@@ -433,6 +446,24 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         {/* Room 2: HVAC Control Hub (Right Top) */}
         <g transform="translate(255, 122)">
           <rect x="0" y="0" width="180" height="70" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
+          
+          {/* Dynamic Interior Room Lighting Glow Overlay */}
+          {lightsOn && (
+            <rect 
+              x="1" 
+              y="1" 
+              width="178" 
+              height="68" 
+              rx="3" 
+              fill={getInteriorColorHex()} 
+              opacity={(lightBrightness / 100) * 0.38} 
+              className="transition-all duration-300 pointer-events-none" 
+            />
+          )}
+
+          {/* Ceiling Light Bulb in Room 2 */}
+          <circle cx="18" cy="18" r="5" fill={lightsOn ? getInteriorColorHex() : '#27272a'} opacity={lightsOn ? lightBrightness / 100 : 0.3} />
+
           <text x="90" y="18" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="sans-serif" fontWeight="bold">CLIMATIZACIÓN A/C</text>
           
           {/* AC Unit Display (Dynamic Color: Cool = Sky Blue, Heat = Rose/Red, Eco = Emerald) */}
@@ -469,6 +500,23 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         <g transform="translate(255, 202)">
           <rect x="0" y="0" width="180" height="70" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
           
+          {/* Dynamic Interior Room Lighting Glow Overlay */}
+          {lightsOn && (
+            <rect 
+              x="1" 
+              y="1" 
+              width="178" 
+              height="68" 
+              rx="3" 
+              fill={getInteriorColorHex()} 
+              opacity={(lightBrightness / 100) * 0.38} 
+              className="transition-all duration-300 pointer-events-none" 
+            />
+          )}
+
+          {/* Ceiling Light Bulb in Room 3 */}
+          <circle cx="18" cy="18" r="5" fill={lightsOn ? getInteriorColorHex() : '#27272a'} opacity={lightsOn ? lightBrightness / 100 : 0.3} />
+
           {/* Gate Sliding Graphic */}
           <rect x="15" y="12" width="150" height="42" rx="2" fill="#09090b" stroke="#3f3f46" />
           <rect 
