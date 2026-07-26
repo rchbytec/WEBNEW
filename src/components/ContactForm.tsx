@@ -169,7 +169,7 @@ export const ContactForm: React.FC<ContactFormProps> = ({ emailJsConfig, darkMod
           <h2 className={`font-sans text-3xl sm:text-4xl font-extrabold ${
             darkMode ? 'text-white' : 'text-zinc-900'
           }`}>
-            Formulario de Consulta Técnica
+            Formulario de Consultas
           </h2>
           <p className={`text-sm sm:text-base mt-2 ${
             darkMode ? 'text-zinc-400' : 'text-zinc-600'

@@ -120,13 +120,14 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   // Lock body scroll when mobile modal is open
   useEffect(() => {
     if (isMobileModalOpen) {
+      const scrollY = window.scrollY;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.touchAction = '';
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
   }, [isMobileModalOpen]);
 
   // Simulate water pressure & flow rate dynamics when pump is active
@@ -191,8 +192,8 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   };
 
   const getLightGradient = () => {
-    if (!lightsOn) return 'rgba(15, 23, 42, 0.95)';
-    const opacity = (lightBrightness / 100) * 0.6;
+    if (!lightsOn) return 'rgba(9, 9, 11, 0.95)';
+    const opacity = (lightBrightness / 100) * 0.65;
     switch (lightColor) {
       case 'neutral':
         return `rgba(254, 240, 138, ${opacity})`;
@@ -206,10 +207,14 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
   // Renderer for Virtual House SVG Graphic
   const renderHouseSVG = (isCompactMobile = false) => (
-    <div className={`relative w-full rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center transition-all ${
-      isCompactMobile ? 'h-[210px]' : 'h-[310px] sm:h-[330px]'
+    <div className={`relative w-full rounded-xl overflow-hidden border border-zinc-800 transition-all duration-500 flex items-center justify-center ${
+      activeScenario === 'day'
+        ? 'bg-gradient-to-b from-sky-950/40 via-zinc-950 to-zinc-950'
+        : 'bg-gradient-to-b from-indigo-950/60 via-zinc-950 to-black'
+    } ${
+      isCompactMobile ? 'h-[190px]' : 'h-[250px] sm:h-[265px]'
     }`}>
-      {/* Dynamic Room Lighting Overlay Gradient */}
+      {/* Dynamic Room Interior Lighting Overlay Gradient */}
       <div 
         className="absolute inset-0 transition-all duration-700 pointer-events-none z-10"
         style={{
@@ -501,75 +506,87 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   );
 
   // Renderer for Event Logs Terminal
-  const renderEventLogs = () => (
-    <div className="mt-4 pt-3 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3 shrink-0 h-[135px] flex flex-col justify-between">
-      <div className="flex items-center justify-between mb-2 shrink-0">
-        <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
-          <Activity className="w-3.5 h-3.5 text-emerald-400" />
-          LOG DE EVENTOS EN TIEMPO REAL
-        </span>
-        <span className="text-[10px] text-zinc-600 font-mono">RBT OS v4.2</span>
-      </div>
-      <div className="space-y-1 h-[85px] overflow-y-auto font-mono text-[11px] pr-1">
-        {logs.map((log, index) => (
-          <div key={`demo-log-${log.id || 'l'}-${index}`} className="flex items-center gap-2 text-zinc-300">
-            <span className="text-zinc-500 font-semibold shrink-0">{log.time}</span>
-            <span className={`truncate ${log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}`}>
-              {log.text}
+  const renderEventLogs = (isMobile = false) => {
+    if (isMobile) {
+      const mobileLogs = logs.slice(0, 2);
+      return (
+        <div className="mt-2.5 p-2.5 border border-zinc-800 bg-zinc-950/90 rounded-xl shrink-0 shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-mono text-zinc-400 flex items-center gap-1">
+              <Activity className="w-3 h-3 text-emerald-400" />
+              EVENTOS (TIEMPO REAL)
             </span>
+            <span className="text-[9px] text-zinc-500 font-mono">RBT OS</span>
           </div>
-        ))}
-      </div>
-    </div>
-  );
+          <div className="space-y-0.5 font-mono text-[10px]">
+            {mobileLogs.map((log, index) => (
+              <div key={`mobile-log-${log.id || 'ml'}-${index}`} className="flex items-center gap-1.5 text-zinc-300">
+                <span className="text-zinc-500 text-[9px] shrink-0">{log.time}</span>
+                <span className={`truncate ${log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}`}>
+                  {log.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
 
-  // Renderer for Quick Presets
+    return (
+      <div className="mt-3 pt-2.5 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3 shrink-0 h-[115px] flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-1.5 shrink-0">
+          <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            LOG DE EVENTOS EN TIEMPO REAL
+          </span>
+          <span className="text-[10px] text-zinc-600 font-mono">RBT OS v4.2</span>
+        </div>
+        <div className="space-y-1 h-[70px] overflow-y-auto font-mono text-[11px] pr-1">
+          {logs.map((log, index) => (
+            <div key={`demo-log-${log.id || 'l'}-${index}`} className="flex items-center gap-2 text-zinc-300">
+              <span className="text-zinc-500 font-semibold shrink-0">{log.time}</span>
+              <span className={`truncate ${log.type === 'success' ? 'text-emerald-400' : log.type === 'warning' ? 'text-amber-400' : 'text-zinc-300'}`}>
+                {log.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Renderer for Quick Presets (Dia y Noche)
   const renderPresets = (isMobile = false) => (
-    <div className={`flex flex-wrap items-center justify-center gap-2 sm:gap-3 ${isMobile ? 'mb-2' : 'mb-8'}`}>
-      {!isMobile && (
-        <span className={`text-xs font-mono uppercase tracking-wider mr-2 hidden sm:inline ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Escenarios rápidos:</span>
-      )}
+    <div className={`grid grid-cols-2 gap-2 ${isMobile ? 'w-full' : 'w-auto'}`}>
       <button
         onClick={triggerDayMode}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
+        className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap ${
           activeScenario === 'day'
-            ? 'bg-amber-500/25 border-amber-400 text-amber-300 shadow-amber-500/30 shadow-lg animate-pulse ring-2 ring-amber-400/50'
+            ? 'bg-amber-500/25 border-amber-400 text-amber-300 shadow-amber-500/30 shadow-lg animate-pulse ring-1 ring-amber-400/50'
             : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-500'
         }`}
       >
-        <Sun className="w-4 h-4 text-amber-400" />
-        <span>☀️ {sim.dayScenarioLabel || 'Escenario Día'}</span>
+        <Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+        <span>Dia</span>
       </button>
 
       <button
         onClick={triggerNightMode}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
+        className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap ${
           activeScenario === 'night'
-            ? 'bg-purple-500/25 border-purple-400 text-purple-300 shadow-purple-500/30 shadow-lg animate-pulse ring-2 ring-purple-400/50'
+            ? 'bg-purple-500/25 border-purple-400 text-purple-300 shadow-purple-500/30 shadow-lg animate-pulse ring-1 ring-purple-400/50'
             : 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-400'
         }`}
       >
-        <Moon className="w-4 h-4 text-purple-400" />
-        <span>🌙 {sim.nightScenarioLabel || 'Escenario Noche'}</span>
-      </button>
-
-      <button
-        onClick={triggerIrrigation}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
-          waterPumpOn 
-            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-400 shadow-cyan-500/20 shadow-lg animate-pulse'
-            : 'bg-cyan-500/10 hover:bg-cyan-500/20 border-cyan-500/30 text-cyan-500'
-        }`}
-      >
-        <Droplets className="w-4 h-4 text-cyan-500" />
-        <span>💧 {waterPumpOn ? 'Detener Bomba' : (sim.waterPumpLabel || 'Encender Riego / Bomba')}</span>
+        <Moon className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+        <span>Noche</span>
       </button>
     </div>
   );
 
   // Renderer for All Control Dashboard Cards
   const renderControlCards = () => (
-    <div className="h-full flex flex-col justify-between gap-3">
+    <div className="flex flex-col gap-3.5 sm:gap-4">
       {/* Control Card 1: Iluminación Inteligente */}
       <div className={`border rounded-2xl p-5 shadow-lg transition-colors ${
         darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
@@ -788,39 +805,42 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
       </div>
 
       {/* Control Card 4: Seguridad & Portón Automático */}
-      <div className={`border rounded-2xl p-4 shadow-lg flex items-center justify-between gap-4 transition-colors ${
+      <div className={`border rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 transition-colors ${
         darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
       }`}>
         {/* Alarma */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setAlarmArmed(!alarmArmed);
-              addLog(!alarmArmed ? 'Alarma & Sensores PIR/Magnéticos activados' : 'Alarma desarmada', !alarmArmed ? 'success' : 'warning');
-            }}
-            className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
-              alarmArmed ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
-            }`}
-          >
-            {alarmArmed ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
-          </button>
-          <div>
-            <div className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Alarma Perimetral</div>
-            <div className={`text-[10px] ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{alarmArmed ? 'PIR & Puerta/Ventanas ON' : 'Desactivada'}</div>
+        <div className="flex items-center justify-between sm:justify-start gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setAlarmArmed(!alarmArmed);
+                addLog(!alarmArmed ? 'Alarma & Sensores PIR/Magnéticos activados' : 'Alarma desarmada', !alarmArmed ? 'success' : 'warning');
+              }}
+              className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
+                alarmArmed ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
+              }`}
+            >
+              {alarmArmed ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+            </button>
+            <div>
+              <div className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Alarma Perimetral</div>
+              <div className={`text-[10px] ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{alarmArmed ? 'PIR & Puerta/Ventanas ON' : 'Desactivada'}</div>
+            </div>
           </div>
         </div>
 
-        <div className={`h-8 w-px ${darkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
+        <div className={`hidden sm:block h-8 w-px ${darkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`} />
 
-        {/* Portón */}
-        <div className="flex items-center gap-3">
+        {/* Portón Automático */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-zinc-800/80">
+          <span className={`text-xs font-bold sm:hidden ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Portón Automático</span>
           <button
             onClick={() => {
               setGateOpen(!gateOpen);
               addLog(!gateOpen ? 'Portón abriendo...' : 'Portón cerrando...', 'info');
             }}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-              gateOpen ? 'bg-sky-500/20 border-sky-500/40 text-sky-500' : darkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-zinc-100 border-zinc-300 text-zinc-700'
+            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              gateOpen ? 'bg-sky-500/20 border-sky-500/40 text-sky-400' : darkMode ? 'bg-zinc-800 border-zinc-700 text-zinc-300' : 'bg-zinc-100 border-zinc-300 text-zinc-700'
             }`}
           >
             {gateOpen ? 'Portón Abierto' : 'Abrir Portón'}
@@ -839,18 +859,12 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
-        {/* Section Title */}
-        <div className="text-center max-w-3xl mx-auto mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-semibold tracking-wider uppercase mb-3">
+        {/* Section Title Badge */}
+        <div className="text-center max-w-3xl mx-auto mb-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold tracking-wider uppercase">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{sim.badge}</span>
           </div>
-          <h2 className={`font-sans text-2xl sm:text-3xl font-extrabold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
-            {sim.title}
-          </h2>
-          <p className={`text-sm sm:text-base mt-2 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-            {sim.description}
-          </p>
         </div>
 
         {/* MOBILE ONLY: "Simular" Button */}
@@ -862,11 +876,6 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
             <Play className="w-5 h-5 fill-zinc-950" />
             <span>Simular</span>
           </button>
-        </div>
-
-        {/* DESKTOP ONLY: Quick Scenario Preset Buttons */}
-        <div className="hidden lg:block">
-          {renderPresets(false)}
         </div>
 
         {/* DESKTOP VIEW: 2-Column Grid with PERFECT EQUAL HEIGHT (items-stretch) */}
@@ -886,9 +895,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   Vista Previa Casa Inteligente
                 </span>
               </div>
-              <span className={`text-[11px] font-mono ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                100% Sincronizado
-              </span>
+
+              {/* Day & Night Scenario Buttons embedded in Header */}
+              {renderPresets(false)}
             </div>
 
             <div className="flex-1 flex flex-col justify-center my-auto">
@@ -912,7 +921,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           <div className={`border rounded-2xl p-4 shadow-2xl relative flex flex-col justify-between ${
             darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
           }`}>
-            <div className={`flex items-center justify-between mb-3 border-b pb-2.5 ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <div className={`flex items-center justify-center mb-3 border-b pb-2.5 ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -959,18 +968,18 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
       </div>
 
       {/* MOBILE POPUP / FULLSCREEN MODAL FOR INTERACTIVE SIMULATOR */}
-      {/* PERFECT IMPLEMENTATION: Top area (Header + House) is STRICTLY FIXED, bottom area is SCROLLABLE */}
+      {/* PERFECT IMPLEMENTATION: Top area (Header + House + Logs) is STRICTLY FIXED, bottom area is SCROLLABLE */}
       <AnimatePresence>
         {isMobileModalOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-zinc-950 text-white flex flex-col h-screen overflow-hidden lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-50 bg-zinc-950 text-white flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden lg:hidden overscroll-none"
           >
-            {/* 1. FIXED TOP REGION: Header + Fixed SVG House Preview */}
-            <div className="shrink-0 bg-zinc-900/98 border-b border-zinc-800 shadow-2xl p-3 z-20">
+            {/* 1. FIXED TOP REGION: Header + Fixed SVG House Preview + Compact Event Logs */}
+            <div className="shrink-0 bg-zinc-900/98 border-b border-zinc-800 shadow-2xl p-3 z-20 touch-none select-none">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2.5 w-2.5">
@@ -992,20 +1001,17 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
               {/* House SVG fixed preview locked at top */}
               {renderHouseSVG(true)}
+
+              {/* Event Logs directly underneath house (1-2 lines max) */}
+              {renderEventLogs(true)}
             </div>
 
-            {/* 2. SCROLLABLE BOTTOM REGION: Presets, Controls & Event Logs */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-12">
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3 text-center">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 block mb-2">Escenarios Rápidos</span>
-                {renderPresets(true)}
-              </div>
+            {/* 2. SCROLLABLE BOTTOM REGION: Presets & Controls */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32 overscroll-contain">
+              {renderPresets(true)}
 
               {/* Control Cards */}
               {renderControlCards()}
-
-              {/* Event Logs */}
-              {renderEventLogs()}
             </div>
           </motion.div>
         )}
