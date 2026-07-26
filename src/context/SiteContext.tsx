@@ -198,29 +198,7 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             uniqueId = `slide-${i}-${Math.random().toString(36).substring(2, 6)}`;
           }
           seenSlides.add(uniqueId);
-
-          // Fix chip image on solar slide if legacy or stale
-          let imageUrl = item.imageUrl;
-          let badge = item.badge;
-          let subtitle = item.subtitle;
-          let title = item.title;
-          let description = item.description;
-
-          if (i === 0) {
-            badge = 'Energía Limpia';
-            subtitle = 'Kits de Energía Solar';
-            title = 'Venta, Instalación y Soporte';
-            description = 'Vendemos, instalamos, configuramos y brindamos soporte integral a equipos de energía solar fotovoltaica para proyectos residenciales y rurales.';
-            imageUrl = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=800&q=80';
-          } else if (
-            (badge && (badge.toLowerCase().includes('solar') || badge.toLowerCase().includes('energía limpia'))) ||
-            (subtitle && subtitle.toLowerCase().includes('solar')) ||
-            (title && title.toLowerCase().includes('solar'))
-          ) {
-            imageUrl = 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&w=800&q=80';
-          }
-
-          return { ...item, id: uniqueId, badge, subtitle, title, description, imageUrl };
+          return { ...item, id: uniqueId };
         });
 
         const seenBanners = new Set<string>();

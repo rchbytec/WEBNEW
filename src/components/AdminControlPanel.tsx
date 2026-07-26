@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSiteContext } from '../context/SiteContext';
 import { sendAdminEmail } from '../utils/emailNotifier';
 import { HeroSlide, BannerOffer, ServiceItem } from '../types';
+import { HERO_SLIDES } from '../data/companyData';
 import { 
   X, 
   Save, 
@@ -40,7 +41,10 @@ import {
   Smartphone,
   Tablet,
   Clock,
-  ChevronDown
+  ChevronDown,
+  Upload,
+  RotateCcw,
+  Image as ImageIcon
 } from 'lucide-react';
 
 interface AdminControlPanelProps {
@@ -359,7 +363,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                 }`}
               >
                 <Sliders className="w-4 h-4" />
-                <span>Carrusel Hero</span>
+                <span>Hero Banner</span>
               </button>
 
               <button
@@ -715,142 +719,255 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               {/* TAB 3: HERO SLIDES */}
               {activeTab === 'hero' && (
                 <div className="space-y-6 max-w-4xl">
-                  <div className="border-b border-zinc-800/40 pb-3 flex items-center justify-between">
+                  <div className="border-b border-zinc-800/40 pb-3 flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-lg">Carrusel Hero Banner ({formData.heroSlides.length} Slides)</h3>
-                      <p className="text-xs text-zinc-400">Modifique títulos, descripciones e imágenes del banner principal.</p>
+                      <h3 className="font-bold text-lg">Hero Banner - Carrusel Principal ({formData.heroSlides.length} Slides)</h3>
+                      <p className="text-xs text-zinc-400">Configure los títulos, descripciones y cargue imágenes por URL o subiendo un archivo local desde su PC.</p>
                     </div>
-                    <button
-                      onClick={() => {
-                        const newSlide: HeroSlide = {
-                          id: `slide-${Date.now()}`,
-                          title: 'Nuevo Servicio Técnico',
-                          subtitle: 'Especialistas Certificados',
-                          description: 'Descripción del nuevo servicio ofrecido por RCH-BYTEC.',
-                          badge: 'Nuevo',
-                          ctaText: 'Consultar Ahora',
-                          ctaCategory: 'repair',
-                          imageBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95))',
-                          imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
-                        };
-                        setFormData({ ...formData, heroSlides: [...formData.heroSlides, newSlide] });
-                      }}
-                      className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Agregar Slide</span>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          if (confirm('¿Desea restaurar las imágenes originales predeterminadas para todas las diapositivas del Hero Banner?')) {
+                            const restored = formData.heroSlides.map((slide, idx) => {
+                              const orig = HERO_SLIDES.find(s => s.id === slide.id) || HERO_SLIDES[idx % HERO_SLIDES.length];
+                              return { ...slide, imageUrl: orig ? orig.imageUrl : slide.imageUrl };
+                            });
+                            setFormData({ ...formData, heroSlides: restored });
+                          }
+                        }}
+                        className="px-3 py-1.5 rounded-lg font-bold text-xs bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all flex items-center gap-1.5 cursor-pointer border border-zinc-700/60"
+                        title="Restaurar imágenes originales predeterminadas"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Restaurar Fotos Originales</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const newSlide: HeroSlide = {
+                            id: `slide-${Date.now()}`,
+                            title: 'Nuevo Servicio Técnico',
+                            subtitle: 'Especialistas Certificados',
+                            description: 'Descripción del nuevo servicio ofrecido por RCH-BYTEC.',
+                            badge: 'Nuevo',
+                            ctaText: 'Consultar Ahora',
+                            ctaCategory: 'repair',
+                            imageBg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.95))',
+                            imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80'
+                          };
+                          setFormData({ ...formData, heroSlides: [...formData.heroSlides, newSlide] });
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Agregar Slide</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-6">
-                    {formData.heroSlides.map((slide, idx) => (
-                      <div key={`admin-slide-${slide.id || 's'}-${idx}`} className={`p-4 sm:p-5 rounded-2xl border space-y-3 ${
-                        darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
-                      }`}>
-                        <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
-                          <span className="font-mono text-xs font-bold text-emerald-500">Slide #{idx + 1} ({slide.id})</span>
-                          <button
-                            onClick={() => {
-                              if (formData.heroSlides.length <= 1) {
-                                alert('Debe haber al menos 1 slide en el carrusel.');
-                                return;
-                              }
-                              const updated = formData.heroSlides.filter((_, i) => i !== idx);
-                              setFormData({ ...formData, heroSlides: updated });
-                            }}
-                            className="p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                    {formData.heroSlides.map((slide, idx) => {
+                      const origSlide = HERO_SLIDES.find(s => s.id === slide.id) || HERO_SLIDES[idx % HERO_SLIDES.length];
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[11px] font-semibold mb-1">Título del Slide</label>
-                            <input
-                              type="text"
-                              value={slide.title}
-                              onChange={(e) => {
-                                const updated = [...formData.heroSlides];
-                                updated[idx].title = e.target.value;
+                      return (
+                        <div key={`admin-slide-${slide.id || 's'}-${idx}`} className={`p-4 sm:p-5 rounded-2xl border space-y-4 ${
+                          darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                        }`}>
+                          <div className="flex items-center justify-between border-b border-zinc-800/40 pb-2">
+                            <span className="font-mono text-xs font-bold text-emerald-500 flex items-center gap-2">
+                              <ImageIcon className="w-4 h-4 text-emerald-400" />
+                              Slide #{idx + 1} ({slide.id})
+                            </span>
+                            <button
+                              onClick={() => {
+                                if (formData.heroSlides.length <= 1) {
+                                  alert('Debe haber al menos 1 slide en el carrusel.');
+                                  return;
+                                }
+                                const updated = formData.heroSlides.filter((_, i) => i !== idx);
                                 setFormData({ ...formData, heroSlides: updated });
                               }}
-                              className={`w-full px-3 py-1.5 rounded-lg border text-xs font-bold ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
-                            />
+                              className="p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                              title="Eliminar slide"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[11px] font-semibold mb-1">Título del Slide</label>
+                              <input
+                                type="text"
+                                value={slide.title}
+                                onChange={(e) => {
+                                  const updated = [...formData.heroSlides];
+                                  updated[idx].title = e.target.value;
+                                  setFormData({ ...formData, heroSlides: updated });
+                                }}
+                                className={`w-full px-3 py-1.5 rounded-lg border text-xs font-bold ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold mb-1">Subtítulo</label>
+                              <input
+                                type="text"
+                                value={slide.subtitle}
+                                onChange={(e) => {
+                                  const updated = [...formData.heroSlides];
+                                  updated[idx].subtitle = e.target.value;
+                                  setFormData({ ...formData, heroSlides: updated });
+                                }}
+                                className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold mb-1">Etiqueta / Badge</label>
+                              <input
+                                type="text"
+                                value={slide.badge}
+                                onChange={(e) => {
+                                  const updated = [...formData.heroSlides];
+                                  updated[idx].badge = e.target.value;
+                                  setFormData({ ...formData, heroSlides: updated });
+                                }}
+                                className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-semibold mb-1">Texto Botón CTA</label>
+                              <input
+                                type="text"
+                                value={slide.ctaText}
+                                onChange={(e) => {
+                                  const updated = [...formData.heroSlides];
+                                  updated[idx].ctaText = e.target.value;
+                                  setFormData({ ...formData, heroSlides: updated });
+                                }}
+                                className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
+                              />
+                            </div>
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-semibold mb-1">Subtítulo</label>
-                            <input
-                              type="text"
-                              value={slide.subtitle}
+                            <label className="block text-[11px] font-semibold mb-1">Descripción del Servicio</label>
+                            <textarea
+                              rows={2}
+                              value={slide.description}
                               onChange={(e) => {
                                 const updated = [...formData.heroSlides];
-                                updated[idx].subtitle = e.target.value;
+                                updated[idx].description = e.target.value;
                                 setFormData({ ...formData, heroSlides: updated });
                               }}
                               className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
                             />
                           </div>
 
-                          <div>
-                            <label className="block text-[11px] font-semibold mb-1">Etiqueta / Badge</label>
-                            <input
-                              type="text"
-                              value={slide.badge}
-                              onChange={(e) => {
-                                const updated = [...formData.heroSlides];
-                                updated[idx].badge = e.target.value;
-                                setFormData({ ...formData, heroSlides: updated });
-                              }}
-                              className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
-                            />
+                          {/* IMAGE SELECTION & UPLOAD BLOCK */}
+                          <div className={`p-3.5 rounded-xl border space-y-3 ${
+                            darkMode ? 'bg-zinc-950/80 border-zinc-800' : 'bg-white border-zinc-200'
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                Imagen del Banner (URL o Archivo Local)
+                              </label>
+                              {origSlide && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...formData.heroSlides];
+                                    updated[idx].imageUrl = origSlide.imageUrl;
+                                    setFormData({ ...formData, heroSlides: updated });
+                                  }}
+                                  className="text-[10px] font-semibold text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                                  title="Restaurar imagen original de fábrica"
+                                >
+                                  <RotateCcw className="w-3 h-3" />
+                                  <span>Restaurar foto original</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                              {/* Preview Box */}
+                              <div className="relative h-24 rounded-lg overflow-hidden border border-zinc-700/60 bg-black/40 flex items-center justify-center group">
+                                {slide.imageUrl ? (
+                                  <img 
+                                    src={slide.imageUrl} 
+                                    alt={slide.title} 
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onError={(e) => {
+                                      (e.target as HTMLElement).style.display = 'none';
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="text-[10px] text-zinc-500">Sin imagen</span>
+                                )}
+                                <div className="absolute bottom-1 right-1 bg-black/70 backdrop-blur-md text-[9px] px-1.5 py-0.5 rounded font-mono text-zinc-300">
+                                  Vista Previa
+                                </div>
+                              </div>
+
+                              {/* Controls */}
+                              <div className="md:col-span-2 space-y-2">
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-0.5 font-semibold">1. Dirección URL de la Imagen</label>
+                                  <input
+                                    type="text"
+                                    placeholder="https://images.unsplash.com/..."
+                                    value={slide.imageUrl}
+                                    onChange={(e) => {
+                                      const updated = [...formData.heroSlides];
+                                      updated[idx].imageUrl = e.target.value;
+                                      setFormData({ ...formData, heroSlides: updated });
+                                    }}
+                                    className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono ${
+                                      darkMode ? 'bg-zinc-900 border-zinc-800 text-zinc-200' : 'bg-zinc-50 border-zinc-300 text-zinc-800'
+                                    }`}
+                                  />
+                                </div>
+
+                                <div>
+                                  <label className="block text-[10px] text-zinc-400 mb-1 font-semibold">2. O subir archivo directamente desde su PC / Disco</label>
+                                  <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 cursor-pointer transition-colors">
+                                    <Upload className="w-3.5 h-3.5" />
+                                    <span>Seleccionar imagen local...</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          if (file.size > 8 * 1024 * 1024) {
+                                            alert('La imagen seleccionada supera los 8MB. Por favor elija un archivo más pequeño.');
+                                            return;
+                                          }
+                                          const reader = new FileReader();
+                                          reader.onload = (evt) => {
+                                            const base64 = evt.target?.result as string;
+                                            if (base64) {
+                                              const updated = [...formData.heroSlides];
+                                              updated[idx].imageUrl = base64;
+                                              setFormData({ ...formData, heroSlides: updated });
+                                            }
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-
-                          <div>
-                            <label className="block text-[11px] font-semibold mb-1">Texto Botón CTA</label>
-                            <input
-                              type="text"
-                              value={slide.ctaText}
-                              onChange={(e) => {
-                                const updated = [...formData.heroSlides];
-                                updated[idx].ctaText = e.target.value;
-                                setFormData({ ...formData, heroSlides: updated });
-                              }}
-                              className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
-                            />
-                          </div>
                         </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold mb-1">Descripción del Servicio</label>
-                          <textarea
-                            rows={2}
-                            value={slide.description}
-                            onChange={(e) => {
-                              const updated = [...formData.heroSlides];
-                              updated[idx].description = e.target.value;
-                              setFormData({ ...formData, heroSlides: updated });
-                            }}
-                            className={`w-full px-3 py-1.5 rounded-lg border text-xs ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-semibold mb-1">URL de la Imagen</label>
-                          <input
-                            type="text"
-                            value={slide.imageUrl}
-                            onChange={(e) => {
-                              const updated = [...formData.heroSlides];
-                              updated[idx].imageUrl = e.target.value;
-                              setFormData({ ...formData, heroSlides: updated });
-                            }}
-                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono ${darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'}`}
-                          />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
