@@ -15,20 +15,18 @@
   }
 }
 
-/* Custom scrollbar for ultra clean look */
+/* Hide all scrollbars globally across all elements while keeping content scrollable */
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+*::-webkit-scrollbar,
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #09090b;
-}
-::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  display: none;
+  width: 0px;
+  height: 0px;
+  background: transparent;
 }
 
 /* Glassmorphism helpers */

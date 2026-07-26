@@ -20,6 +20,7 @@ export interface AdminCredentials {
   triggerKeyword?: string;
   requiredClicks?: number;
   maxClickIntervalSec?: number;
+  triggerWindowSeconds?: number;
 }
 
 export interface SimulatorConfig {
@@ -81,7 +82,8 @@ const defaultAdminCredentials: AdminCredentials = {
   password: 'Admin_123',
   triggerKeyword: 'admin',
   requiredClicks: 5,
-  maxClickIntervalSec: 1.5,
+  maxClickIntervalSec: 2,
+  triggerWindowSeconds: 5,
 };
 
 const defaultSimulatorConfig: SimulatorConfig = {

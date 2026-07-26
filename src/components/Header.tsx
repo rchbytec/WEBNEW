@@ -19,6 +19,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const { 
     siteData, 
+    setSiteData,
     isAdminLoggedIn, 
     setIsAdminLoggedIn,
     setIsLoginModalOpen, 
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
   // Secret trigger state
   const [isRedActive, setIsRedActive] = useState(false);
+  const [isResetGlow, setIsResetGlow] = useState(false);
   const [redTimeLeft, setRedTimeLeft] = useState(5);
   const [secretInputValue, setSecretInputValue] = useState('');
 
@@ -47,12 +49,13 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const allowToggle = themeConfig?.allowToggle ?? true;
 
   const requiredClicks = adminCredentials?.requiredClicks ?? 5;
-  const maxClickIntervalSec = adminCredentials?.maxClickIntervalSec ?? 1.5;
+  const maxClickIntervalSec = adminCredentials?.maxClickIntervalSec ?? 2;
+  const triggerWindowSeconds = adminCredentials?.triggerWindowSeconds ?? 5;
   const triggerKeyword = (adminCredentials?.triggerKeyword || 'admin').trim().toLowerCase();
 
   const resetRedState = () => {
     setIsRedActive(false);
-    setRedTimeLeft(5);
+    setRedTimeLeft(triggerWindowSeconds);
     setSecretInputValue('');
     clickCountRef.current = 0;
     keyBufferRef.current = '';
@@ -73,7 +76,8 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     };
   }, []);
 
-  const handleLogoClick = () => {
+  const handleLogoClick = (e: React.MouseEvent) => {
+    const isShiftCtrl = e.shiftKey && e.ctrlKey;
     const now = Date.now();
     const intervalMs = maxClickIntervalSec * 1000;
 
@@ -86,10 +90,39 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
     if (clickCountRef.current >= requiredClicks) {
       clickCountRef.current = 0;
+
+      // Special combination: Shift + Ctrl + 5 clicks -> Factory Reset
+      if (isShiftCtrl) {
+        resetRedState();
+
+        const factoryCredentials = {
+          ...adminCredentials,
+          triggerWindowSeconds: 5,
+          triggerKeyword: 'admin',
+          requiredClicks: 5,
+          maxClickIntervalSec: 2,
+        };
+
+        setSiteData((prev) => ({
+          ...prev,
+          adminCredentials: factoryCredentials,
+        }));
+
+        setIsResetGlow(true);
+        setNotificationMsg('Acceso de administración restaurado a valores de fábrica (5s, admin, 5 clics, 2s).');
+
+        setTimeout(() => {
+          setIsResetGlow(false);
+        }, 2000);
+
+        return;
+      }
+
+      // Standard trigger window activation
       keyBufferRef.current = '';
       setSecretInputValue('');
       setIsRedActive(true);
-      setRedTimeLeft(5);
+      setRedTimeLeft(triggerWindowSeconds);
 
       // Synchronously focus hidden input inside touch/click event handler to trigger mobile virtual keyboard
       if (activeInputRef.current) {
@@ -100,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       if (redTimerRef.current) clearTimeout(redTimerRef.current);
       if (redIntervalRef.current) clearInterval(redIntervalRef.current);
 
-      let countdown = 5;
+      let countdown = triggerWindowSeconds;
       redIntervalRef.current = setInterval(() => {
         countdown -= 1;
         setRedTimeLeft(countdown);
@@ -111,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
       redTimerRef.current = setTimeout(() => {
         resetRedState();
-      }, 5000);
+      }, triggerWindowSeconds * 1000);
     }
   };
 
@@ -195,27 +228,36 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             <div 
               onClick={handleLogoClick}
               className={`flex items-center gap-2.5 group cursor-pointer select-none transition-all duration-300 ${
-                isRedActive ? 'scale-105' : ''
+                isResetGlow ? 'scale-105 p-1 rounded-xl bg-emerald-500/10 ring-2 ring-emerald-500/50' : isRedActive ? 'scale-105' : ''
               }`}
               title={companyInfo.fullName || 'RCH-BYTEC SRL'}
             >
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className={`font-mono font-bold text-lg sm:text-xl tracking-wider leading-none transition-colors duration-300 ${
-                    isRedActive 
+                    isResetGlow
+                      ? 'text-emerald-500 font-black animate-pulse drop-shadow-[0_0_12px_rgba(16,185,129,0.9)]'
+                      : isRedActive 
                       ? 'text-red-600 dark:text-red-500 font-black animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' 
                       : darkMode ? 'text-white' : 'text-zinc-900'
                   }`}>
                     {companyInfo.fullName || 'RCH-BYTEC SRL'}
                   </span>
-                  {isRedActive && (
+                  {isResetGlow && (
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-600 text-white font-mono text-[10px] font-extrabold animate-pulse shadow-md">
+                      RESETEADO
+                    </span>
+                  )}
+                  {!isResetGlow && isRedActive && (
                     <span className="px-1.5 py-0.5 rounded bg-red-600 text-white font-mono text-[10px] font-extrabold animate-bounce shadow-md">
                       {redTimeLeft}s
                     </span>
                   )}
                 </div>
                 <span className={`text-[10.2px] sm:text-[11.1px] font-semibold tracking-[0.025em] uppercase mt-1 leading-none block whitespace-nowrap transition-colors duration-300 ${
-                  isRedActive 
+                  isResetGlow
+                    ? 'text-emerald-400 font-extrabold animate-pulse'
+                    : isRedActive 
                     ? 'text-red-500 dark:text-red-400 font-extrabold animate-pulse' 
                     : darkMode ? 'text-zinc-400' : 'text-zinc-500'
                 }`}>

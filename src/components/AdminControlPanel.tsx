@@ -198,7 +198,8 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
         password: 'Admin_123',
         triggerKeyword: 'admin',
         requiredClicks: 5,
-        maxClickIntervalSec: 1.5,
+        maxClickIntervalSec: 2,
+        triggerWindowSeconds: 5,
         ...(siteData?.adminCredentials || {}),
         ...(data?.adminCredentials || {})
       },
@@ -238,6 +239,17 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
   const [formData, setFormData] = useState(() => getSafeData(siteData));
 
+  // Validation errors state
+  interface AdminFormErrors {
+    email?: string;
+    password?: string;
+    triggerKeyword?: string;
+    requiredClicks?: string;
+    triggerWindowSeconds?: string;
+    maxClickIntervalSec?: string;
+  }
+  const [adminErrors, setAdminErrors] = useState<AdminFormErrors>({});
+
   // When panel opens, sync local draft
   React.useEffect(() => {
     if (isAdminPanelOpen && siteData) {
@@ -247,29 +259,134 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
   if (!isAdminPanelOpen) return null;
 
+  const validateAdminForm = (): { isValid: boolean; parsedCredentials?: any; firstErrorFieldId?: string } => {
+    const newErrors: AdminFormErrors = {};
+    const creds = formData.adminCredentials || {};
+
+    // 1. Email
+    const emailVal = String(creds.email || '').trim();
+    if (!emailVal || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+      newErrors.email = 'Ingrese un correo electrónico válido.';
+    }
+
+    // 2. Password
+    const passVal = String(creds.password || '').trim();
+    if (!passVal || passVal.length < 3) {
+      newErrors.password = 'La contraseña debe tener al menos 3 caracteres.';
+    }
+
+    // 3. Palabra clave secreta
+    const kwVal = String(creds.triggerKeyword || '').trim();
+    if (!kwVal || kwVal.length < 3 || kwVal.length > 9) {
+      newErrors.triggerKeyword = 'La palabra clave debe tener entre 3 y 9 caracteres.';
+    }
+
+    // 4. Clics sobre el logo
+    const reqClicksRaw = String(creds.requiredClicks ?? '').trim();
+    const reqClicksNum = parseInt(reqClicksRaw, 10);
+    if (!reqClicksRaw || isNaN(reqClicksNum) || reqClicksNum < 3 || reqClicksNum > 9) {
+      newErrors.requiredClicks = 'Los clics sobre el logo deben estar entre 3 y 9.';
+    }
+
+    // 5. Segundos de ventana activa
+    const windowSecRaw = String(creds.triggerWindowSeconds ?? '').trim();
+    const windowSecNum = parseInt(windowSecRaw, 10);
+    if (!windowSecRaw || isNaN(windowSecNum) || windowSecNum < 3 || windowSecNum > 9) {
+      newErrors.triggerWindowSeconds = 'Los segundos de ventana activa deben estar entre 3 y 9.';
+    }
+
+    // 6. Tiempo máximo entre clics
+    const maxIntervalRaw = String(creds.maxClickIntervalSec ?? '').trim();
+    const maxIntervalNum = parseFloat(maxIntervalRaw);
+    if (!maxIntervalRaw || isNaN(maxIntervalNum) || maxIntervalNum < 0.5 || maxIntervalNum > 10) {
+      newErrors.maxClickIntervalSec = 'El tiempo entre clics debe estar entre 0.5 y 10 segundos.';
+    }
+
+    setAdminErrors(newErrors);
+
+    const errorKeys = Object.keys(newErrors) as (keyof AdminFormErrors)[];
+    if (errorKeys.length > 0) {
+      const firstKey = errorKeys[0];
+      const fieldIdMap: Record<keyof AdminFormErrors, string> = {
+        email: 'admin-input-email',
+        password: 'admin-input-password',
+        triggerKeyword: 'admin-input-keyword',
+        triggerWindowSeconds: 'admin-input-window',
+        requiredClicks: 'admin-input-clicks',
+        maxClickIntervalSec: 'admin-input-interval',
+      };
+      return { isValid: false, firstErrorFieldId: fieldIdMap[firstKey] };
+    }
+
+    return {
+      isValid: true,
+      parsedCredentials: {
+        email: emailVal,
+        password: passVal,
+        triggerKeyword: kwVal.toLowerCase(),
+        requiredClicks: reqClicksNum,
+        triggerWindowSeconds: windowSecNum,
+        maxClickIntervalSec: maxIntervalNum,
+      },
+    };
+  };
+
   const handleSaveAll = () => {
-    setSiteData(formData);
+    const { isValid, parsedCredentials, firstErrorFieldId } = validateAdminForm();
+    if (!isValid) {
+      setActiveTab('admin');
+      setTimeout(() => {
+        if (firstErrorFieldId) {
+          const el = document.getElementById(firstErrorFieldId);
+          if (el) {
+            el.focus();
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 120);
+      setNotificationMsg('Hay errores en la configuración del Administrador. Verifique los campos en rojo.');
+      return;
+    }
+
+    const updatedFormData = {
+      ...formData,
+      adminCredentials: parsedCredentials,
+    };
+
+    setFormData(updatedFormData);
+    setSiteData(updatedFormData);
     setSaveSuccess(true);
     setNotificationMsg('¡Todos los cambios del sitio web han sido guardados con éxito!');
     setTimeout(() => setSaveSuccess(false), 3000);
   };
 
   const handleSaveAdminCredentials = async () => {
-    const newEmail = formData.adminCredentials.email.trim();
-    const newPassword = formData.adminCredentials.password.trim();
-
-    if (!newEmail || !newPassword) {
-      alert('Por favor complete el email y la nueva contraseña.');
+    const { isValid, parsedCredentials, firstErrorFieldId } = validateAdminForm();
+    if (!isValid) {
+      if (firstErrorFieldId) {
+        const el = document.getElementById(firstErrorFieldId);
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      setNotificationMsg('Por favor corregir los errores resaltados en rojo.');
       return;
     }
 
-    setEmailSending(true);
-    setSiteData(formData);
+    const updatedFormData = {
+      ...formData,
+      adminCredentials: parsedCredentials,
+    };
 
-    const message = `Estimado Administrador de RCH-BYTEC,\n\nSe han actualizado correctamente sus credenciales de acceso al Panel de Control de la página web.\n\nNuevas credenciales:\n- Email: ${newEmail}\n- Contraseña Elegida: ${newPassword}\n\nGuarde estas credenciales en un lugar seguro. Si no realizó este cambio, contacte al soporte técnico de inmediato.`;
+    setFormData(updatedFormData);
+    setEmailSending(true);
+    setSiteData(updatedFormData);
+
+    const message = `Estimado Administrador de RCH-BYTEC,\n\nSe han actualizado correctamente sus credenciales y configuración de acceso al Panel de Control.\n\nConfiguración Actualizada:\n- Correo: ${parsedCredentials.email}\n- Contraseña: ${parsedCredentials.password}\n- Palabra clave: ${parsedCredentials.triggerKeyword}\n- Ventana activa: ${parsedCredentials.triggerWindowSeconds} segundos\n- Clics requeridos: ${parsedCredentials.requiredClicks}\n- Intervalo máximo: ${parsedCredentials.maxClickIntervalSec} segundos\n\nGuarde estas credenciales en un lugar seguro. Si no realizó este cambio, contacte al soporte técnico de inmediato.`;
 
     const res = await sendAdminEmail({
-      toEmail: newEmail,
+      toEmail: parsedCredentials.email,
       subject: 'Actualización de Credenciales Admin - RCH-BYTEC',
       message,
     });
@@ -1949,7 +2066,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         No hay registros de visitas en el historial. El registro está vacío.
                       </div>
                     ) : (
-                      <div className="w-full overflow-x-auto scrollbar-thin">
+                      <div className="w-full overflow-x-auto no-scrollbar">
                         <table className="w-full min-w-[640px] text-left border-collapse text-xs">
                           <thead>
                             <tr className={`text-[11px] font-bold border-b ${
@@ -2125,48 +2242,82 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                 <div className="space-y-6 max-w-xl">
                   <div className="border-b border-zinc-800/40 pb-3">
                     <h3 className="font-bold text-lg">Credenciales de Acceso Administrador</h3>
-                    <p className="text-xs text-zinc-400">Cambie el correo o clave por las que usted desee. Se enviará un correo con la confirmación.</p>
+                    <p className="text-xs text-zinc-400">
+                      Configure el correo, contraseña y los parámetros del disparador secreto sobre el logo.
+                    </p>
                   </div>
 
                   <div className={`p-4 rounded-xl border space-y-4 ${
                     darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                   }`}>
+                    {/* EMAIL */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Nuevo Correo Electrónico Admin</span>
+                      <label className="block text-xs font-semibold mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Nuevo Correo Electrónico Admin</span>
+                        </span>
+                        <span className="text-[10px] text-zinc-500">Requerido</span>
                       </label>
                       <input
+                        id="admin-input-email"
                         type="email"
-                        value={formData.adminCredentials.email}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          adminCredentials: { ...formData.adminCredentials, email: e.target.value }
-                        })}
+                        value={formData.adminCredentials.email ?? ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            adminCredentials: { ...formData.adminCredentials, email: e.target.value }
+                          });
+                          if (adminErrors.email) setAdminErrors({ ...adminErrors, email: undefined });
+                        }}
                         placeholder="admin@rchbytecsrl.com.ar"
-                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold ${
-                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                          adminErrors.email
+                            ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                            : darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
                         }`}
                       />
+                      {adminErrors.email && (
+                        <p className="text-[11px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{adminErrors.email}</span>
+                        </p>
+                      )}
                     </div>
 
+                    {/* PASSWORD */}
                     <div>
-                      <label className="block text-xs font-semibold mb-1 flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Nueva Contraseña Admin</span>
+                      <label className="block text-xs font-semibold mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Nueva Contraseña Admin</span>
+                        </span>
+                        <span className="text-[10px] text-zinc-500">Mín. 3 caracteres</span>
                       </label>
                       <input
+                        id="admin-input-password"
                         type="text"
-                        value={formData.adminCredentials.password}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          adminCredentials: { ...formData.adminCredentials, password: e.target.value }
-                        })}
+                        value={formData.adminCredentials.password ?? ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            adminCredentials: { ...formData.adminCredentials, password: e.target.value }
+                          });
+                          if (adminErrors.password) setAdminErrors({ ...adminErrors, password: undefined });
+                        }}
                         placeholder="Nueva Contraseña"
-                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold ${
-                          darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold transition-all ${
+                          adminErrors.password
+                            ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                            : darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
                         }`}
                       />
+                      {adminErrors.password && (
+                        <p className="text-[11px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{adminErrors.password}</span>
+                        </p>
+                      )}
                     </div>
 
                     {/* Secret Trigger Settings */}
@@ -2177,69 +2328,156 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                           <span>Disparador Oculto de Login (Sobre el Logo)</span>
                         </h4>
                         <p className="text-[11px] text-zinc-400 mt-0.5">
-                          Al hacer los clics requeridos sobre el logo del sitio, este se tornará rojo durante 5 segundos esperando que escriba la palabra clave para desplegar el formulario de login.
+                          Al hacer los clics requeridos sobre el logo, se iniciará la ventana de tiempo activa para ingresar la palabra clave.
                         </p>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* PALABRA CLAVE */}
                         <div>
-                          <label className="block text-[11px] font-semibold mb-1">Palabra Clave Secret</label>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Palabra Clave Secreta</span>
+                            <span className="text-[9px] text-zinc-500">3 a 9 caracteres</span>
+                          </label>
                           <input
+                            id="admin-input-keyword"
                             type="text"
-                            value={formData.adminCredentials.triggerKeyword ?? 'admin'}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              adminCredentials: {
-                                ...formData.adminCredentials,
-                                triggerKeyword: e.target.value
-                              }
-                            })}
+                            value={formData.adminCredentials.triggerKeyword ?? ''}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                adminCredentials: {
+                                  ...formData.adminCredentials,
+                                  triggerKeyword: e.target.value
+                                }
+                              });
+                              if (adminErrors.triggerKeyword) setAdminErrors({ ...adminErrors, triggerKeyword: undefined });
+                            }}
                             placeholder="admin"
-                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
-                              darkMode ? 'bg-zinc-950 border-zinc-800 text-amber-400' : 'bg-white border-zinc-300 text-amber-600'
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold transition-all ${
+                              adminErrors.triggerKeyword
+                                ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800 text-amber-400' : 'bg-white border-zinc-300 text-amber-600'
                             }`}
                           />
+                          {adminErrors.triggerKeyword && (
+                            <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>{adminErrors.triggerKeyword}</span>
+                            </p>
+                          )}
                         </div>
 
+                        {/* SEGUNDOS VENTANA ACTIVA */}
                         <div>
-                          <label className="block text-[11px] font-semibold mb-1">Clics Totales sobre Logo</label>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Segundos Ventana Activa</span>
+                            <span className="text-[9px] text-zinc-500">3 a 9 seg</span>
+                          </label>
                           <input
+                            id="admin-input-window"
                             type="number"
-                            min={1}
-                            max={20}
-                            value={formData.adminCredentials.requiredClicks ?? 5}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              adminCredentials: {
-                                ...formData.adminCredentials,
-                                requiredClicks: parseInt(e.target.value, 10) || 5
-                              }
-                            })}
-                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
-                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            min={3}
+                            max={9}
+                            value={formData.adminCredentials.triggerWindowSeconds ?? ''}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                adminCredentials: {
+                                  ...formData.adminCredentials,
+                                  triggerWindowSeconds: e.target.value as any
+                                }
+                              });
+                              if (adminErrors.triggerWindowSeconds) setAdminErrors({ ...adminErrors, triggerWindowSeconds: undefined });
+                            }}
+                            placeholder="5"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold transition-all ${
+                              adminErrors.triggerWindowSeconds
+                                ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
                             }`}
                           />
+                          {adminErrors.triggerWindowSeconds && (
+                            <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>{adminErrors.triggerWindowSeconds}</span>
+                            </p>
+                          )}
                         </div>
 
+                        {/* CLICS TOTALES SOBRE LOGO */}
                         <div>
-                          <label className="block text-[11px] font-semibold mb-1">Máx. Seg. entre Clics</label>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Clics Totales sobre Logo</span>
+                            <span className="text-[9px] text-zinc-500">3 a 9 clics</span>
+                          </label>
                           <input
+                            id="admin-input-clicks"
+                            type="number"
+                            min={3}
+                            max={9}
+                            value={formData.adminCredentials.requiredClicks ?? ''}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                adminCredentials: {
+                                  ...formData.adminCredentials,
+                                  requiredClicks: e.target.value as any
+                                }
+                              });
+                              if (adminErrors.requiredClicks) setAdminErrors({ ...adminErrors, requiredClicks: undefined });
+                            }}
+                            placeholder="5"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold transition-all ${
+                              adminErrors.requiredClicks
+                                ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                          {adminErrors.requiredClicks && (
+                            <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>{adminErrors.requiredClicks}</span>
+                            </p>
+                          )}
+                        </div>
+
+                        {/* MAX SEG ENTRE CLICS */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Máx. Seg. entre Clics</span>
+                            <span className="text-[9px] text-zinc-500">0.5 a 10 seg</span>
+                          </label>
+                          <input
+                            id="admin-input-interval"
                             type="number"
                             step={0.1}
                             min={0.5}
                             max={10}
-                            value={formData.adminCredentials.maxClickIntervalSec ?? 1.5}
-                            onChange={(e) => setFormData({
-                              ...formData,
-                              adminCredentials: {
-                                ...formData.adminCredentials,
-                                maxClickIntervalSec: parseFloat(e.target.value) || 1.5
-                              }
-                            })}
-                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold ${
-                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            value={formData.adminCredentials.maxClickIntervalSec ?? ''}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                adminCredentials: {
+                                  ...formData.adminCredentials,
+                                  maxClickIntervalSec: e.target.value as any
+                                }
+                              });
+                              if (adminErrors.maxClickIntervalSec) setAdminErrors({ ...adminErrors, maxClickIntervalSec: undefined });
+                            }}
+                            placeholder="2"
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-mono font-bold transition-all ${
+                              adminErrors.maxClickIntervalSec
+                                ? 'border-red-500 ring-2 ring-red-500/50 bg-red-500/10 text-red-300'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
                             }`}
                           />
+                          {adminErrors.maxClickIntervalSec && (
+                            <p className="text-[10px] font-bold text-red-500 mt-1 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>{adminErrors.maxClickIntervalSec}</span>
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
