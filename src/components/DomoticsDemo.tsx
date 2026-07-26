@@ -14,7 +14,9 @@ import {
   Sparkles,
   DoorClosed,
   Play,
-  X
+  X,
+  ShieldAlert,
+  Flame
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -178,7 +180,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
     const nextState = !waterPumpOn;
     setWaterPumpOn(nextState);
     addLog(
-      nextState ? 'Bomba de Agua & Riego Activado' : 'Bomba de Agua & Riego Detenido',
+      nextState ? 'Bomba de Agua ON: Carga a Tanque de Techo + Riego' : 'Bomba de Agua & Riego Detenido',
       nextState ? 'success' : 'info'
     );
   };
@@ -200,17 +202,17 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   // Renderer for Virtual House SVG Graphic
   const renderHouseSVG = (isCompactMobile = false) => (
     <div className={`relative w-full rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center transition-all ${
-      isCompactMobile ? 'h-[220px]' : 'h-[320px]'
+      isCompactMobile ? 'h-[210px]' : 'h-[310px] sm:h-[330px]'
     }`}>
       {/* Dynamic Room Lighting Overlay Gradient */}
       <div 
         className="absolute inset-0 transition-all duration-700 pointer-events-none z-10"
         style={{
-          background: `radial-gradient(circle at 50% 30%, ${getLightGradient()} 0%, rgba(9, 9, 11, 0.85) 100%)`
+          background: `radial-gradient(circle at 45% 35%, ${getLightGradient()} 0%, rgba(9, 9, 11, 0.85) 100%)`
         }}
       />
 
-      {/* Water Pump Flow Animation Stream (if pump ON) */}
+      {/* Water Pump Flow Animation Stream (Irrigation Drops at Bottom) */}
       <AnimatePresence>
         {waterPumpOn && (
           <motion.div 
@@ -223,7 +225,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
               <motion.div
                 key={`water-drop-${i}`}
                 animate={{
-                  y: [0, -12, 0],
+                  y: [0, -10, 0],
                   scale: [1, 1.3, 1],
                   opacity: [0.3, 0.9, 0.3]
                 }}
@@ -241,12 +243,34 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
       {/* Vector House Blueprint Graphic */}
       <svg 
-        viewBox="0 0 500 300" 
-        className="w-full h-full p-2 z-10 drop-shadow-2xl select-none"
+        viewBox="0 0 520 310" 
+        className="w-full h-full p-1 z-10 drop-shadow-2xl select-none"
       >
+        {/* Roof Water Tank (Tanque de Agua en el Techo) */}
+        <g transform="translate(340, 12)">
+          {/* Tank Cylinder Base */}
+          <rect x="0" y="8" width="48" height="34" rx="4" fill="#18181b" stroke={waterPumpOn ? "#0284c7" : "#3f3f46"} strokeWidth="1.5" />
+          <ellipse cx="24" cy="8" rx="24" ry="6" fill="#27272a" stroke={waterPumpOn ? "#0284c7" : "#3f3f46"} strokeWidth="1.5" />
+          
+          {/* Water level indicator inside tank */}
+          <rect 
+            x="3" 
+            y={waterPumpOn ? "12" : "24"} 
+            width="42" 
+            height={waterPumpOn ? "26" : "14"} 
+            rx="2" 
+            fill="#0284c7" 
+            opacity="0.8" 
+            className="transition-all duration-700"
+          />
+          <text x="24" y="28" textAnchor="middle" fill="#ffffff" fontSize="7" fontFamily="sans-serif" fontWeight="bold">
+            {waterPumpOn ? 'TANQUE LLENANDO' : 'TANQUE 80%'}
+          </text>
+        </g>
+
         {/* Outer House Roof */}
         <polygon 
-          points="250,20 470,100 30,100" 
+          points="250,30 470,110 30,110" 
           fill="#18181b" 
           stroke={darkMode ? "#3f3f46" : "#52525b"} 
           strokeWidth="3" 
@@ -255,95 +279,173 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         {/* House Main Body Outline */}
         <rect 
           x="50" 
-          y="100" 
+          y="110" 
           width="400" 
-          height="170" 
+          height="175" 
           rx="6" 
           fill="#09090b" 
           stroke={darkMode ? "#27272a" : "#3f3f46"} 
           strokeWidth="3" 
         />
 
-        {/* Room 1: Living Room / Kitchen (Left) */}
-        <g transform="translate(65, 115)">
-          <rect x="0" y="0" width="180" height="140" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
-          <text x="90" y="20" textAnchor="middle" fill="#71717a" fontSize="11" fontFamily="sans-serif" fontWeight="bold">LIVING & AMBIENTE</text>
+        {/* Hydraulic Pipe from Ground Pump up to Roof Water Tank */}
+        {/* Vertical Pipe on right wall */}
+        <path 
+          d="M 442,275 L 442,40 L 388,40" 
+          fill="none" 
+          stroke={waterPumpOn ? "#0284c7" : "#3f3f46"} 
+          strokeWidth="3" 
+          strokeDasharray={waterPumpOn ? "4 2" : "none"}
+          className={waterPumpOn ? "animate-pulse" : ""}
+        />
+        {/* Pump Unit icon on ground */}
+        <g transform="translate(425, 255)">
+          <rect x="0" y="0" width="30" height="20" rx="3" fill={waterPumpOn ? "#0284c7" : "#27272a"} stroke="#0ea5e9" strokeWidth="1" />
+          <text x="15" y="13" textAnchor="middle" fill="#ffffff" fontSize="7" fontWeight="bold">BOMBA</text>
+        </g>
+
+        {/* Room 1: Living Room / Kitchen & Entrance Door (Left) */}
+        <g transform="translate(65, 122)">
+          <rect x="0" y="0" width="180" height="150" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
+          <text x="90" y="18" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="sans-serif" fontWeight="bold">LIVING & INGRESO</text>
           
-          {/* Windows / Curtains */}
-          <rect x="20" y="35" width="60" height="50" rx="2" fill="#09090b" stroke="#3f3f46" strokeWidth="1.5" />
-          {/* Curtain Overlay animation */}
+          {/* Windows & Motorized Vertical Roller Curtain (Arriba hacia Abajo) */}
+          <rect x="15" y="30" width="60" height="50" rx="2" fill="#09090b" stroke="#3f3f46" strokeWidth="1.5" />
+          
+          {/* Vertical Roller Shade: height scales from top (y=30) downward */}
           <rect 
-            x="20" 
-            y="35" 
-            width={60 * (1 - curtainsOpen / 100)} 
-            height="50" 
-            rx="2" 
+            x="15" 
+            y="30" 
+            width="60" 
+            height={50 * (1 - curtainsOpen / 100)} 
+            rx="1" 
             fill="#312e81" 
-            opacity="0.85" 
+            opacity="0.9" 
+            className="transition-all duration-300"
           />
-          <text x="50" y="62" textAnchor="middle" fill="#a1a1aa" fontSize="9">
+          {/* Blind slats horizontal lines for realism */}
+          {curtainsOpen < 90 && (
+            <path 
+              d={`M 15,40 L 75,40 M 15,50 L 75,50 M 15,60 L 75,60`} 
+              stroke="#4338ca" 
+              strokeWidth="1" 
+              opacity="0.7" 
+            />
+          )}
+          <text x="45" y="58" textAnchor="middle" fill="#a1a1aa" fontSize="8" fontWeight="bold">
             {curtainsOpen > 50 ? 'Cortina Abierta' : 'Cortina Cerrada'}
           </text>
+
+          {/* Magnetic Window Sensor */}
+          <circle cx="75" cy="30" r="3" fill={alarmArmed ? "#10b981" : "#71717a"} />
+          {alarmArmed && (
+            <circle cx="75" cy="30" r="7" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />
+          )}
 
           {/* Light bulb indicator */}
           <circle 
             cx="140" 
-            cy="60" 
+            cy="52" 
             r="16" 
             fill={lightsOn ? (lightColor === 'cool' ? '#38bdf8' : lightColor === 'neutral' ? '#fef08a' : '#fbbf24') : '#27272a'} 
             opacity={lightsOn ? lightBrightness / 100 : 0.3} 
           />
-          <text x="140" y="64" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="10" fontWeight="bold">
+          <text x="140" y="56" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="10" fontWeight="bold">
             {lightsOn ? `${lightBrightness}%` : 'OFF'}
           </text>
+
+          {/* Front Entrance Door (Puerta Principal con Sensor Magnético) */}
+          <g transform="translate(105, 90)">
+            <rect x="0" y="0" width="30" height="55" rx="2" fill="#27272a" stroke="#52525b" strokeWidth="1.5" />
+            {/* Door Handle */}
+            <circle cx="23" cy="28" r="2" fill="#fbbf24" />
+            <text x="15" y="48" textAnchor="middle" fill="#a1a1aa" fontSize="7" fontWeight="bold">PUERTA</text>
+
+            {/* Magnetic Door Sensor */}
+            <rect x="26" y="2" width="4" height="6" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
+            {alarmArmed && (
+              <circle cx="28" cy="5" r="8" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />
+            )}
+          </g>
+
+          {/* PIR Ceiling Motion Sensor */}
+          <g transform="translate(80, 2)">
+            <path d="M 0,0 L 20,0 L 15,8 L 5,8 Z" fill={alarmArmed ? "#10b981" : "#52525b"} />
+            {alarmArmed && (
+              <path d="M -5,12 A 15,15 0 0,0 25,12" fill="none" stroke="#10b981" strokeWidth="1.5" strokeDasharray="2 2" className="animate-pulse" />
+            )}
+          </g>
         </g>
 
-        {/* Room 2: HVAC & Water Pump Control Hub (Right Top) */}
-        <g transform="translate(255, 115)">
-          <rect x="0" y="0" width="180" height="65" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
-          <text x="90" y="18" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="sans-serif" fontWeight="bold">CLIMATIZACIÓN</text>
+        {/* Room 2: HVAC Control Hub (Right Top) */}
+        <g transform="translate(255, 122)">
+          <rect x="0" y="0" width="180" height="70" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
+          <text x="90" y="18" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="sans-serif" fontWeight="bold">CLIMATIZACIÓN A/C</text>
           
-          {/* AC Unit Display */}
-          <rect x="15" y="26" width="150" height="28" rx="4" fill={acOn ? "#0c4a6e" : "#09090b"} stroke={acOn ? "#0284c7" : "#27272a"} strokeWidth="1" />
-          <text x="90" y="44" textAnchor="middle" fill={acOn ? "#38bdf8" : "#52525b"} fontSize="11" fontFamily="monospace" fontWeight="bold">
-            {acOn ? `A/C ON: ${acTemp}°C (${acMode.toUpperCase()})` : 'CLIMA STANDBY'}
+          {/* AC Unit Display (Dynamic Color: Cool = Sky Blue, Heat = Rose/Red, Eco = Emerald) */}
+          <rect 
+            x="15" 
+            y="26" 
+            width="150" 
+            height="32" 
+            rx="4" 
+            fill={
+              !acOn ? "#09090b" : acMode === 'heat' ? "#450a0a" : acMode === 'eco' ? "#064e3b" : "#0c4a6e"
+            } 
+            stroke={
+              !acOn ? "#27272a" : acMode === 'heat' ? "#f43f5e" : acMode === 'eco' ? "#10b981" : "#0284c7"
+            } 
+            strokeWidth="1.5" 
+          />
+          <text 
+            x="90" 
+            y="46" 
+            textAnchor="middle" 
+            fill={
+              !acOn ? "#52525b" : acMode === 'heat' ? "#fda4af" : acMode === 'eco' ? "#34d399" : "#38bdf8"
+            } 
+            fontSize="10" 
+            fontFamily="monospace" 
+            fontWeight="bold"
+          >
+            {!acOn ? 'CLIMA STANDBY' : acMode === 'heat' ? `🔥 CALOR: ${acTemp}°C` : acMode === 'eco' ? `🌱 ECO: ${acTemp}°C` : `❄️ FRÍO: ${acTemp}°C`}
           </text>
         </g>
 
         {/* Garage & Gate (Right Bottom) */}
-        <g transform="translate(255, 190)">
-          <rect x="0" y="0" width="180" height="65" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
+        <g transform="translate(255, 202)">
+          <rect x="0" y="0" width="180" height="70" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
           
           {/* Gate Sliding Graphic */}
-          <rect x="15" y="12" width="150" height="40" rx="2" fill="#09090b" stroke="#3f3f46" />
+          <rect x="15" y="12" width="150" height="42" rx="2" fill="#09090b" stroke="#3f3f46" />
           <rect 
             x="15" 
             y="12" 
             width="150" 
-            height={gateOpen ? 8 : 40} 
+            height={gateOpen ? 8 : 42} 
             rx="2" 
             fill="#3f3f46" 
             className="transition-all duration-500"
           />
           
-          {/* Alarm Indicator */}
-          <g transform="translate(-8, 25)">
-            <rect x="0" y="0" width="5" height="14" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
+          {/* Gate Magnetic Alarm Sensor */}
+          <g transform="translate(160, 20)">
+            <rect x="0" y="0" width="6" height="12" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
             {alarmArmed && (
-              <circle cx="2.5" cy="7" r="6" fill="none" stroke="#10b981" strokeWidth="1.5" className="animate-ping" opacity="0.7" />
+              <circle cx="3" cy="6" r="8" fill="none" stroke="#10b981" strokeWidth="1.5" className="animate-ping" opacity="0.8" />
             )}
           </g>
 
-          <text x="60" y="80" textAnchor="middle" fill="#a1a1aa" fontSize="10" fontFamily="sans-serif">
+          <text x="80" y="42" textAnchor="middle" fill="#a1a1aa" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
             Portón {gateOpen ? 'ELEVADO (ABIERTO)' : 'CERRADO'}
           </text>
         </g>
 
         {/* Alarm Status Badge */}
-        <g transform="translate(185, 190)">
-          <rect x="0" y="0" width="120" height="30" rx="15" fill={alarmArmed ? "#064e3b" : "#451a03"} stroke={alarmArmed ? "#10b981" : "#f59e0b"} strokeWidth="1.5" />
-          <text x="60" y="19" textAnchor="middle" fill={alarmArmed ? "#34d399" : "#fbbf24"} fontSize="10" fontWeight="bold">
-            {alarmArmed ? '🛡️ ALARMA & PIR ON' : '🔓 DESARMADA'}
+        <g transform="translate(180, 260)">
+          <rect x="0" y="0" width="160" height="26" rx="13" fill={alarmArmed ? "#064e3b" : "#451a03"} stroke={alarmArmed ? "#10b981" : "#f59e0b"} strokeWidth="1.5" />
+          <text x="80" y="17" textAnchor="middle" fill={alarmArmed ? "#34d399" : "#fbbf24"} fontSize="9" fontWeight="bold">
+            {alarmArmed ? '🛡️ SENSORES PIR & MAGNÉTICOS ON' : '🔓 ALARMA DESARMADA'}
           </text>
         </g>
       </svg>
@@ -352,7 +454,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
   // Renderer for Event Logs Terminal
   const renderEventLogs = () => (
-    <div className="mt-4 pt-3 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3">
+    <div className="mt-4 pt-3 border-t border-zinc-800 bg-zinc-950/80 rounded-xl p-3 flex-1 flex flex-col justify-between min-h-[110px]">
       <div className="flex items-center justify-between mb-2">
         <span className="text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
           <Activity className="w-3.5 h-3.5 text-emerald-400" />
@@ -360,7 +462,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         </span>
         <span className="text-[10px] text-zinc-600 font-mono">RBT OS v4.2</span>
       </div>
-      <div className="space-y-1 max-h-20 overflow-y-auto font-mono text-[11px]">
+      <div className="space-y-1 max-h-24 overflow-y-auto font-mono text-[11px]">
         {logs.map((log, index) => (
           <div key={`demo-log-${log.id || 'l'}-${index}`} className="flex items-center gap-2 text-zinc-300">
             <span className="text-zinc-500 font-semibold">{log.time}</span>
@@ -496,7 +598,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
               <Droplets className="w-5 h-5" />
             </div>
             <div>
-              <h4 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Bomba de Agua & Riego GSM</h4>
+              <h4 className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Bomba de Agua & Carga a Tanque</h4>
               <p className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Presión actual: {waterPressure} BAR</p>
             </div>
           </div>
@@ -560,12 +662,16 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         }`}>
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <Wind className="w-4 h-4 text-sky-500" />
+              <Wind className={`w-4 h-4 ${acOn && acMode === 'heat' ? 'text-rose-500' : 'text-sky-500'}`} />
               <h5 className={`font-bold text-xs ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Climatización</h5>
             </div>
             <button 
               onClick={() => setAcOn(!acOn)}
-              className={`text-[10px] px-2 py-0.5 rounded font-bold cursor-pointer ${acOn ? 'bg-sky-500/20 text-sky-500 border border-sky-500/30' : darkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500'}`}
+              className={`text-[10px] px-2 py-0.5 rounded font-bold cursor-pointer ${
+                acOn 
+                  ? acMode === 'heat' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-sky-500/20 text-sky-500 border border-sky-500/30' 
+                  : darkMode ? 'bg-zinc-800 text-zinc-500' : 'bg-zinc-200 text-zinc-500'
+              }`}
             >
               {acOn ? 'ON' : 'OFF'}
             </button>
@@ -589,14 +695,26 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                 </button>
               </div>
 
+              {/* Mode Selectors with Heat = Red, Cool = Blue */}
               <div className="flex gap-1 text-[10px]">
                 {(['cool', 'heat', 'eco'] as const).map((m, idx) => (
                   <button
                     key={`domo-acmode-${m}-${idx}`}
-                    onClick={() => setAcMode(m)}
-                    className={`px-1.5 py-0.5 rounded capitalize cursor-pointer ${acMode === m ? 'bg-sky-500 text-zinc-950 font-bold' : darkMode ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-100 text-zinc-600'}`}
+                    onClick={() => {
+                      setAcMode(m);
+                      addLog(`Modo Clima cambiado a ${m.toUpperCase()}`, 'info');
+                    }}
+                    className={`px-1.5 py-0.5 rounded capitalize font-bold cursor-pointer transition-colors ${
+                      acMode === m 
+                        ? m === 'heat' 
+                          ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30' 
+                          : m === 'eco' 
+                          ? 'bg-emerald-500 text-zinc-950 shadow-sm shadow-emerald-500/30' 
+                          : 'bg-sky-500 text-zinc-950 shadow-sm shadow-sky-500/30'
+                        : darkMode ? 'bg-zinc-800 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
+                    }`}
                   >
-                    {m}
+                    {m === 'heat' ? '🔥 Calor' : m === 'cool' ? '❄️ Frío' : '🌱 Eco'}
                   </button>
                 ))}
               </div>
@@ -615,7 +733,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           <button
             onClick={() => {
               setAlarmArmed(!alarmArmed);
-              addLog(!alarmArmed ? 'Alarma armada' : 'Alarma desarmada', !alarmArmed ? 'success' : 'warning');
+              addLog(!alarmArmed ? 'Alarma & Sensores PIR/Magnéticos activados' : 'Alarma desarmada', !alarmArmed ? 'success' : 'warning');
             }}
             className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
               alarmArmed ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-amber-500/20 border-amber-500/40 text-amber-400'
@@ -625,7 +743,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           </button>
           <div>
             <div className={`text-xs font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>Alarma Perimetral</div>
-            <div className={`text-[10px] ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{alarmArmed ? 'Protección activa' : 'Desactivada'}</div>
+            <div className={`text-[10px] ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>{alarmArmed ? 'PIR & Puerta/Ventanas ON' : 'Desactivada'}</div>
           </div>
         </div>
 
@@ -688,11 +806,11 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           {renderPresets(false)}
         </div>
 
-        {/* DESKTOP VIEW: 2-Column Grid (House SVG on left, Controls on right) */}
-        <div className="hidden lg:grid grid-cols-12 gap-8 items-start">
+        {/* DESKTOP VIEW: 2-Column Grid with PERFECT EQUAL HEIGHT (items-stretch) */}
+        <div className="hidden lg:grid grid-cols-12 gap-8 items-stretch">
           
-          {/* LEFT 6 COLS: House Card */}
-          <div className={`col-span-6 border rounded-2xl p-5 shadow-2xl relative flex flex-col justify-between min-h-[460px] ${
+          {/* LEFT 6 COLS: House Card + Event Logs (stretches to full height of right column) */}
+          <div className={`col-span-6 border rounded-2xl p-5 shadow-2xl relative flex flex-col justify-between h-full ${
             darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
           }`}>
             <div className={`flex items-center justify-between mb-4 border-b pb-3 ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
@@ -710,12 +828,17 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
               </span>
             </div>
 
-            {renderHouseSVG(false)}
-            {renderEventLogs()}
+            <div className="flex-1 flex flex-col justify-center my-auto">
+              {renderHouseSVG(false)}
+            </div>
+
+            <div className="mt-auto">
+              {renderEventLogs()}
+            </div>
           </div>
 
           {/* RIGHT 6 COLS: Control Cards */}
-          <div className="col-span-6">
+          <div className="col-span-6 flex flex-col justify-between h-full">
             {renderControlCards()}
           </div>
 
@@ -773,60 +896,52 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
       </div>
 
       {/* MOBILE POPUP / FULLSCREEN MODAL FOR INTERACTIVE SIMULATOR */}
+      {/* PERFECT IMPLEMENTATION: Top area (Header + House) is STRICTLY FIXED, bottom area is SCROLLABLE */}
       <AnimatePresence>
         {isMobileModalOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-50 bg-zinc-950/98 text-white overflow-y-auto flex flex-col lg:hidden"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-zinc-950 text-white flex flex-col h-screen overflow-hidden lg:hidden"
           >
-            {/* Modal Header Bar with 'X' Close Button */}
-            <div className="sticky top-0 z-50 bg-zinc-900/95 border-b border-zinc-800 backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-lg">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                </span>
-                <span className="font-bold text-sm text-white font-sans">Simulación Domótica</span>
+            {/* 1. FIXED TOP REGION: Header + Fixed SVG House Preview */}
+            <div className="shrink-0 bg-zinc-900/98 border-b border-zinc-800 shadow-2xl p-3 z-20">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  </span>
+                  <span className="font-extrabold text-sm text-white font-sans">Simulación Domótica en Vivo</span>
+                </div>
+
+                {/* ONLY clean 'X' button */}
+                <button
+                  onClick={() => setIsMobileModalOpen(false)}
+                  className="p-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-700 active:scale-95"
+                  aria-label="Cerrar simulación"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {/* ONLY a clean 'X' button as explicitly requested */}
-              <button
-                onClick={() => setIsMobileModalOpen(false)}
-                className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition-colors cursor-pointer border border-zinc-700 active:scale-95"
-                aria-label="Cerrar simulación"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              {/* House SVG fixed preview locked at top */}
+              {renderHouseSVG(true)}
             </div>
 
-            {/* Modal Scrollable Body */}
-            <div className="p-4 space-y-5 pb-20 max-w-lg mx-auto w-full">
-              {/* Sticky House Preview at top of modal */}
-              <div className="sticky top-14 z-30 shadow-2xl bg-zinc-900/95 border border-zinc-800 rounded-2xl p-3 backdrop-blur-md">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-mono font-semibold uppercase text-emerald-400">
-                    Vista Previa en Vivo
-                  </span>
-                  <span className="text-[10px] text-zinc-500 font-mono">Controles Abajo 👇</span>
-                </div>
-                {renderHouseSVG(true)}
-              </div>
-
-              {/* Quick Scenario Presets inside Modal */}
-              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3 text-center">
+            {/* 2. SCROLLABLE BOTTOM REGION: Presets, Controls & Event Logs */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-12">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3 text-center">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 block mb-2">Escenarios Rápidos</span>
                 {renderPresets(true)}
               </div>
 
-              {/* All Control Dashboard Cards */}
-              <div className="space-y-4">
-                {renderControlCards()}
-              </div>
+              {/* Control Cards */}
+              {renderControlCards()}
 
-              {/* Real-time Logs inside Modal */}
+              {/* Event Logs */}
               {renderEventLogs()}
             </div>
           </motion.div>
