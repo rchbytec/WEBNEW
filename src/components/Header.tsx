@@ -40,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const redTimerRef = useRef<NodeJS.Timeout | null>(null);
   const redIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const keyBufferRef = useRef<string>('');
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
 
   const { companyInfo, headerLinks, adminCredentials, themeConfig } = siteData;
   const allowToggle = themeConfig?.allowToggle ?? true;
@@ -53,6 +54,10 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     setRedTimeLeft(5);
     clickCountRef.current = 0;
     keyBufferRef.current = '';
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.value = '';
+      hiddenInputRef.current.blur();
+    }
     if (redTimerRef.current) clearTimeout(redTimerRef.current);
     if (redIntervalRef.current) clearInterval(redIntervalRef.current);
   };
@@ -83,6 +88,12 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       keyBufferRef.current = '';
       setIsRedActive(true);
       setRedTimeLeft(5);
+
+      // Focus hidden input synchronously within click event handler to automatically open mobile keyboard
+      if (hiddenInputRef.current) {
+        hiddenInputRef.current.value = '';
+        hiddenInputRef.current.focus();
+      }
 
       if (redTimerRef.current) clearTimeout(redTimerRef.current);
       if (redIntervalRef.current) clearInterval(redIntervalRef.current);
@@ -143,6 +154,29 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             : 'bg-transparent py-4'
         }`}
       >
+        {/* Invisible input to trigger mobile virtual keyboard on 5-tap logo sequence */}
+        <input
+          ref={hiddenInputRef}
+          type="text"
+          aria-hidden="true"
+          tabIndex={-1}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          className="sr-only opacity-0 w-0 h-0 absolute -z-50 pointer-events-none"
+          onChange={(e) => {
+            const currentTyped = e.target.value.trim().toLowerCase();
+            keyBufferRef.current = currentTyped;
+            const target = triggerKeyword;
+            if (currentTyped.endsWith(target) || currentTyped === target) {
+              resetRedState();
+              setIsLoginModalOpen(true);
+              setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
+            }
+          }}
+        />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Logo with customizable secret trigger */}
