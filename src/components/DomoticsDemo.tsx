@@ -544,48 +544,52 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           </button>
         </div>
 
-        {/* Slider Brightness */}
-        {lightsOn && (
-          <div className={`space-y-3 pt-2 border-t ${darkMode ? 'border-zinc-800/80' : 'border-zinc-200'}`}>
-            <div className={`flex items-center justify-between text-xs ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
-              <span>Intensidad de Luz</span>
-              <span className="font-mono font-bold text-amber-500">{lightBrightness}%</span>
-            </div>
-            <input 
-              type="range" 
-              min="10" 
-              max="100" 
-              value={lightBrightness} 
-              onChange={(e) => setLightBrightness(Number(e.target.value))}
-              className={`w-full accent-amber-500 h-1.5 rounded-lg cursor-pointer ${darkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}
-            />
+        {/* Slider Brightness & Tones (Always visible, disabled when OFF) */}
+        <div className={`space-y-3 pt-2 border-t ${darkMode ? 'border-zinc-800/80' : 'border-zinc-200'} ${
+          !lightsOn ? 'opacity-40 pointer-events-none' : ''
+        }`}>
+          <div className={`flex items-center justify-between text-xs ${darkMode ? 'text-zinc-300' : 'text-zinc-700'}`}>
+            <span>Intensidad de Luz</span>
+            <span className="font-mono font-bold text-amber-500">{lightBrightness}%</span>
+          </div>
+          <input 
+            type="range" 
+            min="10" 
+            max="100" 
+            value={lightBrightness} 
+            disabled={!lightsOn}
+            onChange={(e) => setLightBrightness(Number(e.target.value))}
+            className={`w-full accent-amber-500 h-1.5 rounded-lg ${lightsOn ? 'cursor-pointer' : 'cursor-not-allowed'} ${darkMode ? 'bg-zinc-800' : 'bg-zinc-200'}`}
+          />
 
-            {/* Color selector */}
-            <div className="flex items-center justify-between pt-1">
-              <span className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Tono de ambiente:</span>
-              <div className="flex items-center gap-2">
-                {[
-                  { id: 'warm', label: 'Cálida', bg: 'bg-amber-400' },
-                  { id: 'neutral', label: 'Neutra', bg: 'bg-yellow-200' },
-                  { id: 'cool', label: 'Fría', bg: 'bg-sky-400' },
-                ].map((c, idx) => (
-                  <button
-                    key={`domo-color-${c.id}-${idx}`}
-                    onClick={() => setLightColor(c.id as any)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all cursor-pointer ${
-                      lightColor === c.id 
-                        ? darkMode ? 'bg-zinc-800 text-white border-zinc-600 ring-2 ring-emerald-500/50' : 'bg-zinc-100 text-zinc-900 border-zinc-400 ring-2 ring-emerald-500/50'
-                        : darkMode ? 'bg-zinc-900/80 text-zinc-400 border-zinc-800 hover:text-zinc-200' : 'bg-white text-zinc-600 border-zinc-200 hover:text-zinc-900'
-                    }`}
-                  >
-                    <span className={`w-2.5 h-2.5 rounded-full ${c.bg}`} />
-                    <span>{c.label}</span>
-                  </button>
-                ))}
-              </div>
+          {/* Color selector */}
+          <div className="flex items-center justify-between pt-1">
+            <span className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Tono de ambiente:</span>
+            <div className="flex items-center gap-2">
+              {[
+                { id: 'warm', label: 'Cálida', bg: 'bg-amber-400' },
+                { id: 'neutral', label: 'Neutra', bg: 'bg-yellow-200' },
+                { id: 'cool', label: 'Fría', bg: 'bg-sky-400' },
+              ].map((c, idx) => (
+                <button
+                  key={`domo-color-${c.id}-${idx}`}
+                  disabled={!lightsOn}
+                  onClick={() => setLightColor(c.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                    lightsOn ? 'cursor-pointer' : 'cursor-not-allowed'
+                  } ${
+                    lightColor === c.id 
+                      ? darkMode ? 'bg-zinc-800 text-white border-zinc-600 ring-2 ring-emerald-500/50' : 'bg-zinc-100 text-zinc-900 border-zinc-400 ring-2 ring-emerald-500/50'
+                      : darkMode ? 'bg-zinc-900/80 text-zinc-400 border-zinc-800 hover:text-zinc-200' : 'bg-white text-zinc-600 border-zinc-200 hover:text-zinc-900'
+                  }`}
+                >
+                  <span className={`w-2.5 h-2.5 rounded-full ${c.bg}`} />
+                  <span>{c.label}</span>
+                </button>
+              ))}
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Control Card 2: Bomba de Agua & Riego */}
@@ -677,49 +681,52 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
             </button>
           </div>
 
-          {acOn && (
-            <div className={`flex items-center justify-between mt-2 pt-2 border-t ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
-              <div className="flex items-center gap-1">
-                <button 
-                  onClick={() => setAcTemp(Math.max(18, acTemp - 1))}
-                  className={`w-6 h-6 rounded font-bold text-xs cursor-pointer ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
-                >
-                  -
-                </button>
-                <span className={`font-mono text-sm font-bold px-1 ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{acTemp}°C</span>
-                <button 
-                  onClick={() => setAcTemp(Math.min(28, acTemp + 1))}
-                  className={`w-6 h-6 rounded font-bold text-xs cursor-pointer ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
-                >
-                  +
-                </button>
-              </div>
-
-              {/* Mode Selectors with Heat = Red, Cool = Blue */}
-              <div className="flex gap-1 text-[10px]">
-                {(['cool', 'heat', 'eco'] as const).map((m, idx) => (
-                  <button
-                    key={`domo-acmode-${m}-${idx}`}
-                    onClick={() => {
-                      setAcMode(m);
-                      addLog(`Modo Clima cambiado a ${m.toUpperCase()}`, 'info');
-                    }}
-                    className={`px-1.5 py-0.5 rounded capitalize font-bold cursor-pointer transition-colors ${
-                      acMode === m 
-                        ? m === 'heat' 
-                          ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30' 
-                          : m === 'eco' 
-                          ? 'bg-emerald-500 text-zinc-950 shadow-sm shadow-emerald-500/30' 
-                          : 'bg-sky-500 text-zinc-950 shadow-sm shadow-sky-500/30'
-                        : darkMode ? 'bg-zinc-800 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
-                    }`}
-                  >
-                    {m === 'heat' ? '🔥 Calor' : m === 'cool' ? '❄️ Frío' : '🌱 Eco'}
-                  </button>
-                ))}
-              </div>
+          <div className={`flex items-center justify-between mt-2 pt-2 border-t ${darkMode ? 'border-zinc-800' : 'border-zinc-200'} ${
+            !acOn ? 'opacity-40 pointer-events-none' : ''
+          }`}>
+            <div className="flex items-center gap-1">
+              <button 
+                disabled={!acOn}
+                onClick={() => setAcTemp(Math.max(18, acTemp - 1))}
+                className={`w-6 h-6 rounded font-bold text-xs ${acOn ? 'cursor-pointer' : 'cursor-not-allowed'} ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
+              >
+                -
+              </button>
+              <span className={`font-mono text-sm font-bold px-1 ${darkMode ? 'text-white' : 'text-zinc-900'}`}>{acTemp}°C</span>
+              <button 
+                disabled={!acOn}
+                onClick={() => setAcTemp(Math.min(28, acTemp + 1))}
+                className={`w-6 h-6 rounded font-bold text-xs ${acOn ? 'cursor-pointer' : 'cursor-not-allowed'} ${darkMode ? 'bg-zinc-800 hover:bg-zinc-700 text-white' : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800'}`}
+              >
+                +
+              </button>
             </div>
-          )}
+
+            {/* Mode Selectors with Heat = Red, Cool = Blue */}
+            <div className="flex gap-1 text-[10px]">
+              {(['cool', 'heat', 'eco'] as const).map((m, idx) => (
+                <button
+                  key={`domo-acmode-${m}-${idx}`}
+                  disabled={!acOn}
+                  onClick={() => {
+                    setAcMode(m);
+                    addLog(`Modo Clima cambiado a ${m.toUpperCase()}`, 'info');
+                  }}
+                  className={`px-1.5 py-0.5 rounded capitalize font-bold transition-colors ${acOn ? 'cursor-pointer' : 'cursor-not-allowed'} ${
+                    acMode === m 
+                      ? m === 'heat' 
+                        ? 'bg-rose-500 text-white shadow-sm shadow-rose-500/30' 
+                        : m === 'eco' 
+                        ? 'bg-emerald-500 text-zinc-950 shadow-sm shadow-emerald-500/30' 
+                        : 'bg-sky-500 text-zinc-950 shadow-sm shadow-sky-500/30'
+                      : darkMode ? 'bg-zinc-800 text-zinc-400 hover:text-white' : 'bg-zinc-100 text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  {m === 'heat' ? '🔥 Calor' : m === 'cool' ? '❄️ Frío' : '🌱 Eco'}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
       </div>
