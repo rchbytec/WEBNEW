@@ -513,7 +513,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
   // Renderer for All Control Dashboard Cards
   const renderControlCards = () => (
-    <div className="space-y-4">
+    <div className="h-full flex flex-col justify-between gap-3">
       {/* Control Card 1: Iluminación Inteligente */}
       <div className={`border rounded-2xl p-5 shadow-lg transition-colors ${
         darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
