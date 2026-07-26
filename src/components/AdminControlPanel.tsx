@@ -42,6 +42,8 @@ import {
   Tablet,
   Clock,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Upload,
   RotateCcw,
   Image as ImageIcon
@@ -148,6 +150,17 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
   const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'visitors' | 'socials' | 'admin'>('general');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
+
+  // Mobile tabs scroll ref and helper
+  const mobileTabRef = React.useRef<HTMLDivElement>(null);
+  const scrollMobileTabs = (direction: 'left' | 'right') => {
+    if (mobileTabRef.current) {
+      mobileTabRef.current.scrollBy({
+        left: direction === 'left' ? -180 : 180,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   // Security Modals
   const [showLogoutConfirmModal, setShowLogoutConfirmModal] = useState(false);
@@ -269,49 +282,50 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
   return (
     <AnimatePresence key="ap-main-admin">
-      <div key="admin-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md">
+      <div key="admin-modal-backdrop" className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md">
         <motion.div
           key="admin-modal-card"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
-          className={`w-full max-w-6xl h-[92vh] rounded-2xl border shadow-2xl flex flex-col overflow-hidden ${
+          className={`w-full max-w-6xl h-full sm:h-[92vh] rounded-none sm:rounded-2xl border-0 sm:border shadow-2xl flex flex-col overflow-hidden ${
             darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-200 text-zinc-900'
           }`}
         >
           {/* Top Bar */}
-          <div className={`px-6 py-4 border-b flex items-center justify-between shrink-0 ${
+          <div className={`px-3 py-2.5 sm:px-6 sm:py-4 border-b flex items-center justify-between shrink-0 gap-2 ${
             darkMode ? 'border-zinc-800 bg-zinc-900/50' : 'border-zinc-200 bg-zinc-50'
           }`}>
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-500/20">
-                <LayoutDashboard className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-500/20 shrink-0">
+                <LayoutDashboard className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-black tracking-tight">Panel de Control RCH-BYTEC</h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <h2 className="text-sm sm:text-lg font-black tracking-tight truncate">Panel RCH-BYTEC</h2>
+                  <span className="hidden xs:inline-block px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
                     Modo Edición Total
                   </span>
                 </div>
-                <p className={`text-xs ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                <p className={`text-xs hidden sm:block ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   Modifique textos, contactos, banners, servicios, enlaces y credenciales de acceso.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <button
                 onClick={handleSaveAll}
-                className="px-4 py-2 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold text-xs bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer"
               >
                 {saveSuccess ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                <span>{saveSuccess ? '¡Guardado!' : 'Guardar Todo'}</span>
+                <span className="hidden sm:inline">{saveSuccess ? '¡Guardado!' : 'Guardar Todo'}</span>
+                <span className="sm:hidden">{saveSuccess ? 'OK' : 'Guardar'}</span>
               </button>
 
               <button
                 onClick={() => setShowLogoutConfirmModal(true)}
-                className={`p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
+                className={`p-1.5 sm:p-2 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1 cursor-pointer ${
                   darkMode ? 'border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800' : 'border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
                 title="Cerrar sesión de administrador"
@@ -321,7 +335,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={() => setIsAdminPanelOpen(false)}
-                className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                className={`p-1.5 sm:p-2 rounded-lg transition-colors cursor-pointer ${
                   darkMode ? 'text-zinc-400 hover:text-white hover:bg-zinc-800' : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100'
                 }`}
               >
@@ -330,10 +344,157 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
             </div>
           </div>
 
-          {/* Main Layout: Tabs Left + Content Right */}
+          {/* Mobile Horizontal Scrollable Tab Bar with Wheel & Touch Scroll (No scrollbar, no arrows) */}
+          <div className={`md:hidden relative flex items-center border-b shrink-0 ${
+            darkMode ? 'border-zinc-800 bg-zinc-900/80' : 'border-zinc-200 bg-zinc-100/80'
+          }`}>
+            {/* Scrollable Container */}
+            <div
+              ref={mobileTabRef}
+              onWheel={(e) => {
+                if (e.deltaY !== 0 && mobileTabRef.current) {
+                  mobileTabRef.current.scrollLeft += e.deltaY;
+                }
+              }}
+              className="flex-1 flex items-center overflow-x-auto p-2.5 gap-2 scrollbar-none [::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] touch-pan-x select-none scroll-smooth"
+            >
+              <button
+                onClick={(e) => {
+                  setActiveTab('general');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'general' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Contacto</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('header');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'header' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Header</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('hero');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'hero' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Hero</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('quick');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'quick' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Ofertas</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('services');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'services' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Briefcase className="w-3.5 h-3.5" />
+                <span>Servicios ({formData.servicesList.length})</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('simulator');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'simulator' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Cpu className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Simulador</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('visitors');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'visitors' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Visitantes ({visitorLogs.length})</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('socials');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'socials' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Redes</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setActiveTab('admin');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'admin' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Admin</span>
+              </button>
+
+              <button
+                onClick={(e) => {
+                  setConfirmTextRestoreFactory('');
+                  setShowRestoreFactoryModal(true);
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-semibold border flex items-center gap-1 whitespace-nowrap cursor-pointer transition-colors ${
+                  darkMode ? 'border-zinc-800 text-red-400 hover:bg-red-500/10' : 'border-zinc-200 text-red-600 hover:bg-red-50'
+                }`}
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>Restaurar</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Layout: Tabs Left (Desktop) + Content Right */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Sidebar Tabs */}
-            <div className={`w-56 shrink-0 border-r p-3 space-y-1 overflow-y-auto ${
+            {/* Desktop Sidebar Tabs */}
+            <div className={`hidden md:block w-56 shrink-0 border-r p-3 space-y-1 overflow-y-auto ${
               darkMode ? 'border-zinc-800 bg-zinc-900/30' : 'border-zinc-200 bg-zinc-50/50'
             }`}>
               <button
@@ -471,7 +632,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
             </div>
 
             {/* Panel Tab Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 p-3.5 sm:p-6 overflow-y-auto w-full">
               
               {/* TAB 1: CONTACTO Y DATOS */}
               {activeTab === 'general' && (
@@ -1788,8 +1949,8 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         No hay registros de visitas en el historial. El registro está vacío.
                       </div>
                     ) : (
-                      <div className="w-full overflow-hidden">
-                        <table className="w-full text-left border-collapse text-xs">
+                      <div className="w-full overflow-x-auto scrollbar-thin">
+                        <table className="w-full min-w-[640px] text-left border-collapse text-xs">
                           <thead>
                             <tr className={`text-[11px] font-bold border-b ${
                               darkMode ? 'bg-zinc-950/80 border-zinc-800 text-zinc-400' : 'bg-zinc-100 border-zinc-200 text-zinc-600'
