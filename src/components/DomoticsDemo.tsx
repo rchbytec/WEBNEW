@@ -165,6 +165,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
     }
   };
 
+  // Mobile View Mode State (Option B sticky preview vs standard layout)
+  const [mobileStickyPreview, setMobileStickyPreview] = useState<boolean>(true);
+
   return (
     <section id="demo" className={`py-16 border-y relative overflow-hidden transition-colors duration-300 ${
       darkMode ? 'border-zinc-800 bg-zinc-950 text-white' : 'border-zinc-200 bg-zinc-100 text-zinc-900'
@@ -188,9 +191,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           </p>
         </div>
 
-        {/* Quick Scenario Preset Buttons */}
+        {/* Quick Scenario Preset Buttons & Mobile Layout Selector */}
         <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-          <span className={`text-xs font-mono uppercase tracking-wider mr-2 hidden sm:inline ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Escenarios rápidos:</span>
+          <span className={`text-xs font-mono uppercase tracking-wider mr-1 hidden sm:inline ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`}>Escenarios rápidos:</span>
           <button
             onClick={triggerDayMode}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
@@ -216,7 +219,21 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
             }`}
           >
             <Droplets className="w-4 h-4 text-cyan-500" />
-            <span>💧 {waterPumpOn ? 'Detener Bomba de Agua' : (sim.waterPumpLabel || 'Encender Riego / Bomba')}</span>
+            <span>💧 {waterPumpOn ? 'Detener Bomba' : (sim.waterPumpLabel || 'Encender Riego')}</span>
+          </button>
+
+          {/* Toggle for Mobile Option B test vs original */}
+          <button
+            onClick={() => setMobileStickyPreview(!mobileStickyPreview)}
+            className={`lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+              mobileStickyPreview 
+                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-sm'
+                : 'bg-zinc-800/80 border-zinc-700 text-zinc-300'
+            }`}
+            title="Alternar entre Vista Fija Opción B y Vista Estándar"
+          >
+            <Gauge className="w-3.5 h-3.5" />
+            <span>Móvil: {mobileStickyPreview ? '📌 Vista Previa Fija (Opción B)' : '📄 Vista Normal'}</span>
           </button>
         </div>
 
@@ -224,11 +241,13 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT 6 COLS: Interactive Virtual House Room SVG Diagram */}
-          <div className={`lg:col-span-6 border rounded-2xl p-5 shadow-2xl relative flex flex-col justify-between min-h-[460px] ${
-            darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white border-zinc-200'
+          <div className={`lg:col-span-6 border rounded-2xl p-4 sm:p-5 shadow-2xl relative flex flex-col justify-between transition-all ${
+            mobileStickyPreview ? 'sticky top-16 z-30 backdrop-blur-md max-lg:shadow-emerald-500/5' : ''
+          } ${
+            darkMode ? 'bg-zinc-900/95 border-zinc-800' : 'bg-white/95 border-zinc-200'
           }`}>
             {/* Header Badge */}
-            <div className={`flex items-center justify-between mb-4 border-b pb-3 ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+            <div className={`flex items-center justify-between mb-3 border-b pb-2.5 ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -238,13 +257,24 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
                   Vista Previa Casa Inteligente
                 </span>
               </div>
-              <span className={`text-[11px] font-mono ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
+
+              {/* Mobile Quick Switch Button */}
+              <button
+                onClick={() => setMobileStickyPreview(!mobileStickyPreview)}
+                className="lg:hidden text-[10px] font-mono px-2 py-1 rounded bg-zinc-800 border border-zinc-700 text-emerald-400 font-semibold cursor-pointer"
+              >
+                {mobileStickyPreview ? '📌 Fijada (Opción B)' : '🔓 Modo Libera'}
+              </button>
+
+              <span className={`text-[11px] font-mono hidden sm:inline ${darkMode ? 'text-zinc-500' : 'text-zinc-400'}`}>
                 100% Sincronizado
               </span>
             </div>
 
-            {/* Interactive SVG Rendering Container */}
-            <div className="relative w-full h-[320px] rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center">
+            {/* Interactive SVG Rendering Container - Compact on mobile for Option B */}
+            <div className={`relative w-full rounded-xl overflow-hidden border border-zinc-800 bg-zinc-950 flex items-center justify-center transition-all ${
+              mobileStickyPreview ? 'h-[200px] sm:h-[320px]' : 'h-[280px] sm:h-[320px]'
+            }`}>
               
               {/* Dynamic Room Lighting Overlay Gradient */}
               <div 
