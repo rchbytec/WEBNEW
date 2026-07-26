@@ -23,7 +23,8 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     setIsAdminLoggedIn,
     setIsLoginModalOpen, 
     setIsAdminPanelOpen,
-    setNotificationMsg 
+    setNotificationMsg,
+    scrollToSection
   } = useSiteContext();
 
   const [scrolled, setScrolled] = useState(false);
@@ -40,7 +41,8 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const redIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const keyBufferRef = useRef<string>('');
 
-  const { companyInfo, headerLinks, adminCredentials } = siteData;
+  const { companyInfo, headerLinks, adminCredentials, themeConfig } = siteData;
+  const allowToggle = themeConfig?.allowToggle ?? true;
 
   const requiredClicks = adminCredentials?.requiredClicks ?? 5;
   const maxClickIntervalSec = adminCredentials?.maxClickIntervalSec ?? 1.5;
@@ -182,6 +184,10 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 <a
                   key={`desk-hdr-${link.id || 'link'}-${idx}`}
                   href={link.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToSection(link.href);
+                  }}
                   className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                     darkMode
                       ? 'text-zinc-300 hover:text-white hover:bg-zinc-800/60'
@@ -241,19 +247,21 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 <span>{companyInfo.phoneNeuquen}</span>
               </a>
 
-              {/* Dark / Light Toggle */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg border transition-colors ${
-                  darkMode
-                    ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white'
-                    : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-900'
-                }`}
-                aria-label="Alternar modo oscuro/claro"
-                title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-              >
-                {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+              {/* Dark / Light Toggle (Hidden if theme is fixed by Admin) */}
+              {allowToggle && (
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className={`p-2 rounded-lg border transition-colors ${
+                    darkMode
+                      ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white'
+                      : 'bg-zinc-100 border-zinc-200 text-zinc-700 hover:bg-zinc-200 hover:text-zinc-900'
+                  }`}
+                  aria-label="Alternar modo oscuro/claro"
+                  title={darkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                >
+                  {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
+              )}
 
               {/* Mobile Menu Button */}
               <button
@@ -289,7 +297,11 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 <a
                   key={`mob-hdr-${link.id || 'link'}-${idx}`}
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    scrollToSection(link.href);
+                  }}
                   className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     darkMode
                       ? 'text-zinc-200 hover:bg-zinc-900'

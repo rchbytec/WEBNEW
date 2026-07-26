@@ -14,7 +14,7 @@ interface HeroBannerProps {
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
-  const { siteData } = useSiteContext();
+  const { siteData, scrollToSection } = useSiteContext();
   const { heroSlides, companyInfo } = siteData;
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -106,6 +106,10 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({ darkMode }) => {
                 <div className="flex flex-wrap items-center gap-3 pt-2">
                   <a
                     href="#contacto"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      scrollToSection('#contacto');
+                    }}
                     className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-colors shadow-sm ${
                       darkMode
                         ? 'bg-zinc-100 text-zinc-900 hover:bg-white'

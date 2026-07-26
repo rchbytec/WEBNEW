@@ -46,6 +46,11 @@ export interface SimulatorConfig {
   ctaButtonText: string;
 }
 
+export interface ThemeConfig {
+  defaultTheme: 'dark' | 'light';
+  allowToggle: boolean;
+}
+
 export interface SiteData {
   companyInfo: typeof initialCompanyInfo & {
     footerDescription: string;
@@ -58,6 +63,7 @@ export interface SiteData {
   brands: typeof initialBrands;
   adminCredentials: AdminCredentials;
   simulatorConfig: SimulatorConfig;
+  themeConfig: ThemeConfig;
 }
 
 const defaultHeaderLinks: HeaderNavLink[] = [
@@ -102,6 +108,11 @@ const defaultSimulatorConfig: SimulatorConfig = {
   ctaButtonText: 'Solicitar Asesoramiento',
 };
 
+const defaultThemeConfig: ThemeConfig = {
+  defaultTheme: 'dark',
+  allowToggle: true,
+};
+
 const defaultSiteData: SiteData = {
   companyInfo: {
     ...initialCompanyInfo,
@@ -115,6 +126,7 @@ const defaultSiteData: SiteData = {
   brands: initialBrands,
   adminCredentials: defaultAdminCredentials,
   simulatorConfig: defaultSimulatorConfig,
+  themeConfig: defaultThemeConfig,
 };
 
 const defaultVisitorLogs: VisitorLog[] = [];
@@ -136,6 +148,8 @@ interface SiteContextType {
   visitorLogs: VisitorLog[];
   clearVisitorLogs: () => void;
   promoteVisitorToAdmin: () => Promise<string>;
+  scrollToSection: (href: string) => void;
+  registerVisit: (sectionOverride?: string) => Promise<void>;
 }
 
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
@@ -168,6 +182,10 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ctaTitle: '¿Desea automatizar su hogar, negocio o campo? Diseños a medida con garantía oficial.',
             ctaDescription: 'Instalaciones profesionales de llaves GSM, bombas de agua y riegos inteligentes, alarmas centrales, cámaras de seguridad monitorizadas y domótica centralizada. Próximamente sistemas centrales de IA integrados.',
             ctaButtonText: 'Solicitar Asesoramiento'
+          },
+          themeConfig: {
+            ...defaultThemeConfig,
+            ...(parsed.themeConfig || {})
           },
           headerLinks: Array.isArray(parsed?.headerLinks) ? parsed.headerLinks : defaultSiteData.headerLinks,
           heroSlides: Array.isArray(parsed?.heroSlides) ? parsed.heroSlides : defaultSiteData.heroSlides,
@@ -383,138 +401,158 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { devType, browserName, ua };
   };
 
-  // Synchronize visitors with backend API in real time ("en caliente")
+  const fetchVisitorLogsFromServer = async () => {
+    try {
+      const res = await fetch('/api/visitors');
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
+        if (data && data.success && Array.isArray(data.visitorLogs)) {
+          setVisitorLogs(data.visitorLogs);
+          try {
+            localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+          } catch (e) {}
+        }
+      }
+    } catch (e) {
+      // silent
+    }
+  };
+
+  const registerVisit = async (sectionOverride?: string) => {
+    const vid = getSafeVisitorId();
+    const currentSection = sectionOverride || '#inicio';
+    const { devType, browserName, ua } = getClientInfo();
+    const screenWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+
+    const currentTimestamp = new Date().toLocaleString('es-AR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+
+    // 1. Immediate local state update so it shows instantly in Admin Panel on current device
+    setVisitorLogs(prev => {
+      const existingIdx = prev.findIndex(l => l.visitor_id === vid || l.id === vid);
+      if (existingIdx !== -1) {
+        const existing = prev[existingIdx];
+        const history = Array.isArray(existing.visitHistory) ? existing.visitHistory : [];
+        const newHistory = history[0]?.visitedSection !== currentSection
+          ? [{ timestamp: currentTimestamp, visitedSection: currentSection }, ...history]
+          : history;
+
+        const updated: VisitorLog = {
+          ...existing,
+          timestamp: currentTimestamp,
+          visitedSection: currentSection,
+          visitCount: existing.visitCount + (history[0]?.visitedSection !== currentSection ? 1 : 0),
+          visitHistory: newHistory,
+          deviceType: devType,
+          browser: `${browserName} (${devType})`,
+          userAgent: ua
+        };
+        const nextLogs = [...prev];
+        nextLogs.splice(existingIdx, 1);
+        return [updated, ...nextLogs];
+      } else {
+        const newLog: VisitorLog = {
+          id: vid,
+          visitor_id: vid,
+          visitorToken: vid,
+          ip: 'Detectando...',
+          firstSeen: currentTimestamp,
+          timestamp: currentTimestamp,
+          visitCount: 1,
+          visitHistory: [{ timestamp: currentTimestamp, visitedSection: currentSection }],
+          deviceType: devType,
+          browser: `${browserName} (${devType})`,
+          location: 'Argentina',
+          visitedSection: currentSection,
+          userAgent: ua
+        };
+        return [newLog, ...prev];
+      }
+    });
+
+    // 2. Register on server and receive updated master logs
+    try {
+      const res = await fetch('/api/visitors/register', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-visitor-id': vid
+        },
+        body: JSON.stringify({
+          visitor_id: vid,
+          visitedSection: currentSection,
+          userAgent: ua,
+          screenWidth
+        })
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
+        if (data && data.success && Array.isArray(data.visitorLogs)) {
+          setVisitorLogs(data.visitorLogs);
+          try {
+            localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      console.warn('Server register visit failed', err);
+    }
+  };
+
+  const scrollToSection = (href: string) => {
+    if (!href) return;
+    const sectionId = href.replace(/^#/, '');
+    if (!sectionId) return;
+
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Register section visit in visitor logs
+    registerVisit('#' + sectionId);
+
+    // Keep URL clean without #hash
+    if (window.location.hash) {
+      try {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
+    }
+  };
+
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchVisitorLogsFromServer = async () => {
+    // Clean hash from URL bar if loaded with #hash and scroll to section
+    if (window.location.hash) {
+      const hashVal = window.location.hash;
+      const sectionId = hashVal.replace('#', '');
+      setTimeout(() => {
+        const elem = document.getElementById(sectionId);
+        if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+      registerVisit(hashVal);
       try {
-        const res = await fetch('/api/visitors');
-        if (res.ok) {
-          const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
-          if (data && data.success && Array.isArray(data.visitorLogs)) {
-            if (isMounted) {
-              setVisitorLogs(data.visitorLogs);
-              try {
-                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
-              } catch (e) {}
-            }
-          }
-        }
-      } catch (e) {
-        // silent
-      }
-    };
-
-    const registerVisit = async (sectionOverride?: string) => {
-      const vid = getSafeVisitorId();
-      const currentSection = sectionOverride || window.location.hash || '#inicio';
-      const { devType, browserName, ua } = getClientInfo();
-      const screenWidth = window.innerWidth;
-
-      const currentTimestamp = new Date().toLocaleString('es-AR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-
-      // 1. Immediate local state update so it shows instantly in Admin Panel on current device
-      setVisitorLogs(prev => {
-        const existingIdx = prev.findIndex(l => l.visitor_id === vid || l.id === vid);
-        if (existingIdx !== -1) {
-          const existing = prev[existingIdx];
-          const history = Array.isArray(existing.visitHistory) ? existing.visitHistory : [];
-          const newHistory = history[0]?.visitedSection !== currentSection
-            ? [{ timestamp: currentTimestamp, visitedSection: currentSection }, ...history]
-            : history;
-
-          const updated: VisitorLog = {
-            ...existing,
-            timestamp: currentTimestamp,
-            visitedSection: currentSection,
-            visitCount: existing.visitCount + (history[0]?.visitedSection !== currentSection ? 1 : 0),
-            visitHistory: newHistory,
-            deviceType: devType,
-            browser: `${browserName} (${devType})`,
-            userAgent: ua
-          };
-          const nextLogs = [...prev];
-          nextLogs.splice(existingIdx, 1);
-          return [updated, ...nextLogs];
-        } else {
-          const newLog: VisitorLog = {
-            id: vid,
-            visitor_id: vid,
-            visitorToken: vid,
-            ip: 'Detectando...',
-            firstSeen: currentTimestamp,
-            timestamp: currentTimestamp,
-            visitCount: 1,
-            visitHistory: [{ timestamp: currentTimestamp, visitedSection: currentSection }],
-            deviceType: devType,
-            browser: `${browserName} (${devType})`,
-            location: 'Argentina',
-            visitedSection: currentSection,
-            userAgent: ua
-          };
-          return [newLog, ...prev];
-        }
-      });
-
-      // 2. Register on server and receive updated master logs
-      try {
-        const res = await fetch('/api/visitors/register', {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'x-visitor-id': vid
-          },
-          body: JSON.stringify({
-            visitor_id: vid,
-            visitedSection: currentSection,
-            userAgent: ua,
-            screenWidth
-          })
-        });
-
-        if (res.ok) {
-          const data = (await res.json()) as { success?: boolean; visitorLogs?: VisitorLog[] };
-          if (data && data.success && Array.isArray(data.visitorLogs)) {
-            if (isMounted) {
-              setVisitorLogs(data.visitorLogs);
-              try {
-                localStorage.setItem(VISITORS_STORAGE_KEY, JSON.stringify(data.visitorLogs));
-              } catch (e) {}
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Server register visit failed', err);
-      }
-    };
-
-    // Initial registration
-    registerVisit();
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (e) {}
+    } else {
+      registerVisit('#inicio');
+    }
 
     // Poll server every 2 seconds for live real-time updates ("en caliente") across devices
     const pollInterval = setInterval(() => {
       fetchVisitorLogsFromServer();
     }, 2000);
 
-    // Listen to hash section changes
-    const handleHashChange = () => {
-      registerVisit(window.location.hash);
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-
     return () => {
-      isMounted = false;
       clearInterval(pollInterval);
-      window.removeEventListener('hashchange', handleHashChange);
     };
   }, []);
 
@@ -635,6 +673,8 @@ export const SiteProvider: React.FC<{ children: React.ReactNode }> = ({ children
         visitorLogs,
         clearVisitorLogs,
         promoteVisitorToAdmin,
+        scrollToSection,
+        registerVisit,
       }}
     >
       {children}

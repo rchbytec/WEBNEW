@@ -213,6 +213,12 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
         ctaButtonText: 'Solicitar Asesoramiento',
         ...(siteData?.simulatorConfig || {}),
         ...(data?.simulatorConfig || {})
+      },
+      themeConfig: {
+        defaultTheme: 'dark',
+        allowToggle: true,
+        ...(siteData?.themeConfig || {}),
+        ...(data?.themeConfig || {})
       }
     };
   }, [siteData]);
@@ -656,8 +662,106 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               {activeTab === 'header' && (
                 <div className="space-y-6 max-w-3xl">
                   <div className="border-b border-zinc-800/40 pb-3">
-                    <h3 className="font-bold text-lg">Navegación del Header</h3>
-                    <p className="text-xs text-zinc-400">Personalice los nombres visibles del menú de navegación superior.</p>
+                    <h3 className="font-bold text-lg">Header, Menú y Configuración de Tema</h3>
+                    <p className="text-xs text-zinc-400">Personalice los nombres del menú y configure el modo de tema por defecto y sus permisos.</p>
+                  </div>
+
+                  {/* Configuración de Tema (Oscuro / Claro / Fijo) */}
+                  <div className={`p-5 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <div className="flex items-center gap-2 border-b border-zinc-800/40 pb-3">
+                      <Sun className="w-4 h-4 text-emerald-400" />
+                      <h4 className="font-bold text-sm">Modo de Tema Predeterminado y Botón del Header</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Default Theme Choice */}
+                      <div>
+                        <label className={`block text-xs font-semibold mb-2 ${darkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>
+                          Tema Predeterminado al Cargar
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              themeConfig: { ...formData.themeConfig, defaultTheme: 'dark' }
+                            })}
+                            className={`flex-1 py-2.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                              formData.themeConfig?.defaultTheme === 'dark'
+                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-sm'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white' : 'bg-white border-zinc-300 text-zinc-700'
+                            }`}
+                          >
+                            <Moon className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Oscuro (Dark)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              themeConfig: { ...formData.themeConfig, defaultTheme: 'light' }
+                            })}
+                            className={`flex-1 py-2.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                              formData.themeConfig?.defaultTheme === 'light'
+                                ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 font-bold shadow-sm'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white' : 'bg-white border-zinc-300 text-zinc-700'
+                            }`}
+                          >
+                            <Sun className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Claro (Light)</span>
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
+                          Define si el sitio se abre por defecto en modo oscuro o en modo claro cuando entra un visitante.
+                        </p>
+                      </div>
+
+                      {/* Theme Lock / Toggle Mode */}
+                      <div>
+                        <label className={`block text-xs font-semibold mb-2 ${darkMode ? 'text-zinc-200' : 'text-zinc-700'}`}>
+                          Comportamiento del Botón de Cambio
+                        </label>
+                        <div className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              themeConfig: { ...formData.themeConfig, allowToggle: true }
+                            })}
+                            className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                              formData.themeConfig?.allowToggle === true
+                                ? 'bg-emerald-500/15 border-emerald-500 text-emerald-400 font-bold'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-300 text-zinc-700'
+                            }`}
+                          >
+                            <span>Permitir cambio (Muestra icono sol/luna)</span>
+                            {formData.themeConfig?.allowToggle === true && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setFormData({
+                              ...formData,
+                              themeConfig: { ...formData.themeConfig, allowToggle: false }
+                            })}
+                            className={`w-full py-2 px-3 rounded-lg border text-xs font-semibold flex items-center justify-between transition-all cursor-pointer ${
+                              formData.themeConfig?.allowToggle === false
+                                ? 'bg-amber-500/15 border-amber-500 text-amber-400 font-bold'
+                                : darkMode ? 'bg-zinc-950 border-zinc-800 text-zinc-400' : 'bg-white border-zinc-300 text-zinc-700'
+                            }`}
+                          >
+                            <span>Tema Fijo (Oculta icono de cambio en Header)</span>
+                            {formData.themeConfig?.allowToggle === false && <Check className="w-4 h-4 text-amber-400 shrink-0" />}
+                          </button>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
+                          Si selecciona "Tema Fijo", los visitantes no podrán cambiar el tema y el botón de sol/luna en el header se ocultará.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Informative Banner */}

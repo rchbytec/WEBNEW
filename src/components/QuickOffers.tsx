@@ -8,7 +8,7 @@ interface QuickOffersProps {
 }
 
 export const QuickOffers: React.FC<QuickOffersProps> = ({ darkMode }) => {
-  const { siteData } = useSiteContext();
+  const { siteData, scrollToSection } = useSiteContext();
   const quickBanners = siteData.quickBanners || [];
 
   const getBannerIcon = (iconName: string) => {
@@ -92,6 +92,10 @@ export const QuickOffers: React.FC<QuickOffersProps> = ({ darkMode }) => {
                 <span>RCH-BYTEC</span>
                 <a
                   href="#contacto"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    scrollToSection('#contacto');
+                  }}
                   className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded border transition-all shadow-sm ${
                     darkMode
                       ? 'bg-zinc-800 text-zinc-200 hover:text-white hover:bg-zinc-700 border-zinc-700'

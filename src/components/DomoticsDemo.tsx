@@ -21,7 +21,7 @@ interface DomoticsDemoProps {
 }
 
 export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) => {
-  const { siteData } = useSiteContext();
+  const { siteData, scrollToSection } = useSiteContext();
   const sim = siteData.simulatorConfig || {
     badge: 'DEMO INTERACTIVA EN VIVO',
     title: 'Simulación Domótica',
@@ -752,6 +752,10 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
           <a
             href="#contacto"
+            onClick={(e) => {
+              e.preventDefault();
+              scrollToSection('#contacto');
+            }}
             className="shrink-0 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs tracking-wide transition-all shadow-lg shadow-emerald-500/20"
           >
             {sim.ctaButtonText}

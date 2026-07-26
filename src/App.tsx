@@ -17,8 +17,20 @@ import { CheckCircle2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 function AppContent() {
-  const [darkMode, setDarkMode] = useState<boolean>(true);
-  const { notificationMsg, setNotificationMsg } = useSiteContext();
+  const { siteData, notificationMsg, setNotificationMsg } = useSiteContext();
+  const themeConfig = siteData?.themeConfig || { defaultTheme: 'dark', allowToggle: true };
+
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
+    return themeConfig.defaultTheme !== 'light';
+  });
+
+  useEffect(() => {
+    if (!themeConfig.allowToggle) {
+      setDarkMode(themeConfig.defaultTheme === 'dark');
+    } else if (themeConfig.defaultTheme) {
+      setDarkMode(themeConfig.defaultTheme === 'dark');
+    }
+  }, [themeConfig.defaultTheme, themeConfig.allowToggle]);
 
   const [emailJsConfig] = useState<EmailJSConfig>(() => {
     const saved = localStorage.getItem('rch_emailjs_config');

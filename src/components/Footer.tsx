@@ -7,11 +7,11 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
-  const { siteData } = useSiteContext();
+  const { siteData, scrollToSection } = useSiteContext();
   const { companyInfo } = siteData;
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    scrollToSection('#inicio');
   };
 
   return (
@@ -23,7 +23,14 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center text-center">
         
         {/* Centered Brand Logo */}
-        <a href="#inicio" className="flex items-center gap-2.5 group mb-6">
+        <a 
+          href="#inicio" 
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('#inicio');
+          }}
+          className="flex items-center gap-2.5 group mb-6"
+        >
           <span className={`font-sans font-extrabold text-2xl tracking-tight ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
             {companyInfo.fullName || 'RCH-BYTEC SRL'}
           </span>
