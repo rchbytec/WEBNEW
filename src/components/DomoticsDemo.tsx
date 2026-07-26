@@ -68,6 +68,9 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   const [alarmArmed, setAlarmArmed] = useState<boolean>(sim.initialAlarmArmed);
   const [gateOpen, setGateOpen] = useState<boolean>(sim.initialGateOpen);
 
+  // Active scenario identifier for UI pulsing/glow highlight ('day' | 'night' | 'none')
+  const [activeScenario, setActiveScenario] = useState<'day' | 'night' | 'none'>('day');
+
   // Sync state if sim config updates from admin panel
   useEffect(() => {
     setLightsOn(sim.initialLightsOn);
@@ -152,6 +155,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   };
 
   const triggerDayMode = () => {
+    setActiveScenario('day');
     setLightsOn(true);
     setLightBrightness(100);
     setLightColor('cool');
@@ -164,6 +168,7 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
   };
 
   const triggerNightMode = () => {
+    setActiveScenario('night');
     setLightsOn(true);
     setLightBrightness(30);
     setLightColor('warm');
@@ -243,9 +248,25 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
 
       {/* Vector House Blueprint Graphic */}
       <svg 
-        viewBox="0 0 520 310" 
+        viewBox="0 0 520 340" 
         className="w-full h-full p-1 z-10 drop-shadow-2xl select-none"
       >
+        {/* Scenario Indicator: Half Sun or Half Moon peeking from top-left corner vertex */}
+        {activeScenario === 'day' ? (
+          <g transform="translate(0, 0)">
+            <circle cx="0" cy="0" r="35" fill="#fbbf24" opacity="0.2" className="animate-pulse" />
+            <circle cx="0" cy="0" r="22" fill="#f59e0b" stroke="#fbbf24" strokeWidth="2" />
+          </g>
+        ) : (
+          <g transform="translate(0, 0)">
+            <circle cx="0" cy="0" r="35" fill="#a855f7" opacity="0.2" className="animate-pulse" />
+            <path d="M 0,30 A 30,30 0 0,0 30,0 A 24,24 0 0,1 0,30 Z" fill="#c084fc" stroke="#e9d5ff" strokeWidth="1.5" />
+            <circle cx="36" cy="14" r="1.5" fill="#f43f5e" className="animate-ping" />
+            <circle cx="18" cy="38" r="1.5" fill="#38bdf8" className="animate-ping" />
+            <circle cx="42" cy="24" r="1" fill="#fef08a" className="animate-pulse" />
+          </g>
+        )}
+
         {/* Roof Water Tank (Tanque de Agua en el Techo) */}
         <g transform="translate(340, 12)">
           {/* Tank Cylinder Base */}
@@ -289,36 +310,59 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
         />
 
         {/* Hydraulic Pipe from Ground Pump up to Roof Water Tank */}
-        {/* Vertical Pipe on right wall */}
+        {/* Vertical Pipe on right wall outside house */}
         <path 
-          d="M 442,275 L 442,40 L 388,40" 
+          d="M 471,252 L 471,40 L 388,40" 
           fill="none" 
           stroke={waterPumpOn ? "#0284c7" : "#3f3f46"} 
           strokeWidth="3" 
           strokeDasharray={waterPumpOn ? "4 2" : "none"}
           className={waterPumpOn ? "animate-pulse" : ""}
         />
-        {/* Pump Unit icon on ground */}
-        <g transform="translate(425, 255)">
-          <rect x="0" y="0" width="30" height="20" rx="3" fill={waterPumpOn ? "#0284c7" : "#27272a"} stroke="#0ea5e9" strokeWidth="1" />
-          <text x="15" y="13" textAnchor="middle" fill="#ffffff" fontSize="7" fontWeight="bold">BOMBA</text>
+
+        {/* Lower Irrigation Pipe from Pump to Garden Sprinklers (Lowered to absolute bottom edge) */}
+        <path 
+          d="M 471,274 L 471,332 L 10,332" 
+          fill="none" 
+          stroke={waterPumpOn ? "#0284c7" : "#3f3f46"} 
+          strokeWidth="2.5" 
+          strokeDasharray={waterPumpOn ? "4 2" : "none"}
+          className={waterPumpOn ? "animate-pulse" : ""}
+        />
+
+        {/* Garden Sprinklers along lower irrigation line */}
+        {[60, 150, 240, 330, 420].map((xPos, idx) => (
+          <g key={`sprinkler-${xPos}-${idx}`} transform={`translate(${xPos}, 330)`}>
+            <rect x="-3" y="0" width="6" height="4" rx="1" fill={waterPumpOn ? "#0ea5e9" : "#52525b"} />
+            {waterPumpOn && (
+              <g>
+                <path d="M -7,-5 Q 0,-11 7,-5" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="2 1" className="animate-pulse" />
+                <path d="M -11,-9 Q 0,-16 11,-9" fill="none" stroke="#7dd3fc" strokeWidth="1.2" opacity="0.8" className="animate-pulse" />
+              </g>
+            )}
+          </g>
+        ))}
+
+        {/* Pump Unit icon on ground to the right of house */}
+        <g transform="translate(452, 252)">
+          <rect x="0" y="0" width="38" height="22" rx="3" fill={waterPumpOn ? "#0284c7" : "#27272a"} stroke="#0ea5e9" strokeWidth="1" />
+          <text x="19" y="14" textAnchor="middle" fill="#ffffff" fontSize="8" fontWeight="bold">BOMBA</text>
         </g>
 
         {/* Room 1: Living Room / Kitchen & Entrance Door (Left) */}
         <g transform="translate(65, 122)">
           <rect x="0" y="0" width="180" height="150" rx="4" fill="#18181b" stroke="#27272a" strokeWidth="1.5" />
-          <text x="90" y="18" textAnchor="middle" fill="#71717a" fontSize="10" fontFamily="sans-serif" fontWeight="bold">LIVING & INGRESO</text>
           
-          {/* Windows & Motorized Vertical Roller Curtain (Arriba hacia Abajo) */}
-          <rect x="15" y="30" width="60" height="50" rx="2" fill="#09090b" stroke="#3f3f46" strokeWidth="1.5" />
+          {/* Windows & Motorized Vertical Roller Curtain (Bajada) */}
+          <rect x="8" y="48" width="82" height="64" rx="3" fill="#09090b" stroke="#3f3f46" strokeWidth="1.5" />
           
-          {/* Vertical Roller Shade: height scales from top (y=30) downward */}
+          {/* Vertical Roller Shade: height scales from top (y=48) downward */}
           <rect 
-            x="15" 
-            y="30" 
-            width="60" 
-            height={50 * (1 - curtainsOpen / 100)} 
-            rx="1" 
+            x="8" 
+            y="48" 
+            width="82" 
+            height={64 * (1 - curtainsOpen / 100)} 
+            rx="2" 
             fill="#312e81" 
             opacity="0.9" 
             className="transition-all duration-300"
@@ -326,46 +370,50 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
           {/* Blind slats horizontal lines for realism */}
           {curtainsOpen < 90 && (
             <path 
-              d={`M 15,40 L 75,40 M 15,50 L 75,50 M 15,60 L 75,60`} 
+              d={`M 8,61 L 90,61 M 8,74 L 90,74 M 8,87 L 90,87 M 8,100 L 90,100`} 
               stroke="#4338ca" 
               strokeWidth="1" 
               opacity="0.7" 
             />
           )}
-          <text x="45" y="58" textAnchor="middle" fill="#a1a1aa" fontSize="8" fontWeight="bold">
+          <text x="49" y="83" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold">
             {curtainsOpen > 50 ? 'Cortina Abierta' : 'Cortina Cerrada'}
           </text>
 
-          {/* Magnetic Window Sensor */}
-          <circle cx="75" cy="30" r="3" fill={alarmArmed ? "#10b981" : "#71717a"} />
-          {alarmArmed && (
-            <circle cx="75" cy="30" r="7" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />
-          )}
+          {/* Rectangular Magnetic Window Sensor (Centrado a la mitad del borde derecho de la ventana) */}
+          <g transform="translate(87, 74)">
+            <rect x="0" y="0" width="6" height="12" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
+            {alarmArmed && (
+              <circle cx="3" cy="6" r="8" fill="none" stroke="#10b981" strokeWidth="1.5" className="animate-ping" opacity="0.8" />
+            )}
+          </g>
 
-          {/* Light bulb indicator */}
+          {/* Light bulb indicator (Subido en la parte superior) */}
           <circle 
             cx="140" 
-            cy="52" 
-            r="16" 
+            cy="32" 
+            r="15" 
             fill={lightsOn ? (lightColor === 'cool' ? '#38bdf8' : lightColor === 'neutral' ? '#fef08a' : '#fbbf24') : '#27272a'} 
             opacity={lightsOn ? lightBrightness / 100 : 0.3} 
           />
-          <text x="140" y="56" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="10" fontWeight="bold">
+          <text x="140" y="36" textAnchor="middle" fill={lightsOn ? '#000' : '#71717a'} fontSize="9.5" fontWeight="bold">
             {lightsOn ? `${lightBrightness}%` : 'OFF'}
           </text>
 
-          {/* Front Entrance Door (Puerta Principal con Sensor Magnético) */}
-          <g transform="translate(105, 90)">
-            <rect x="0" y="0" width="30" height="55" rx="2" fill="#27272a" stroke="#52525b" strokeWidth="1.5" />
+          {/* Front Entrance Door (Corregida hacia la derecha) */}
+          <g transform="translate(122, 76)">
+            <rect x="0" y="0" width="38" height="66" rx="3" fill="#27272a" stroke="#52525b" strokeWidth="1.5" />
             {/* Door Handle */}
-            <circle cx="23" cy="28" r="2" fill="#fbbf24" />
-            <text x="15" y="48" textAnchor="middle" fill="#a1a1aa" fontSize="7" fontWeight="bold">PUERTA</text>
+            <circle cx="30" cy="34" r="2.5" fill="#fbbf24" />
+            <text x="19" y="55" textAnchor="middle" fill="#e4e4e7" fontSize="8.5" fontWeight="bold">PUERTA</text>
 
             {/* Magnetic Door Sensor */}
-            <rect x="26" y="2" width="4" height="6" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
-            {alarmArmed && (
-              <circle cx="28" cy="5" r="8" fill="none" stroke="#10b981" strokeWidth="1" className="animate-ping" />
-            )}
+            <g transform="translate(31, 2)">
+              <rect x="0" y="0" width="6" height="12" rx="1" fill={alarmArmed ? "#10b981" : "#71717a"} />
+              {alarmArmed && (
+                <circle cx="3" cy="6" r="8" fill="none" stroke="#10b981" strokeWidth="1.5" className="animate-ping" opacity="0.8" />
+              )}
+            </g>
           </g>
 
           {/* PIR Ceiling Motion Sensor */}
@@ -436,15 +484,15 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
             )}
           </g>
 
-          <text x="80" y="42" textAnchor="middle" fill="#a1a1aa" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-            Portón {gateOpen ? 'ELEVADO (ABIERTO)' : 'CERRADO'}
+          <text x="90" y="37" textAnchor="middle" fill="#ffffff" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
+            Portón {gateOpen ? 'Abierto' : 'Cerrado'}
           </text>
         </g>
 
         {/* Alarm Status Badge */}
-        <g transform="translate(180, 260)">
-          <rect x="0" y="0" width="160" height="26" rx="13" fill={alarmArmed ? "#064e3b" : "#451a03"} stroke={alarmArmed ? "#10b981" : "#f59e0b"} strokeWidth="1.5" />
-          <text x="80" y="17" textAnchor="middle" fill={alarmArmed ? "#34d399" : "#fbbf24"} fontSize="9" fontWeight="bold">
+        <g transform="translate(140, 278)">
+          <rect x="0" y="0" width="220" height="24" rx="12" fill={alarmArmed ? "#064e3b" : "#451a03"} stroke={alarmArmed ? "#10b981" : "#f59e0b"} strokeWidth="1.5" />
+          <text x="110" y="16" textAnchor="middle" fill={alarmArmed ? "#34d399" : "#fbbf24"} fontSize="9.5" fontWeight="bold">
             {alarmArmed ? '🛡️ SENSORES PIR & MAGNÉTICOS ON' : '🔓 ALARMA DESARMADA'}
           </text>
         </g>
@@ -483,15 +531,23 @@ export const DomoticsDemo: React.FC<DomoticsDemoProps> = ({ darkMode = true }) =
       )}
       <button
         onClick={triggerDayMode}
-        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-500 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
+          activeScenario === 'day'
+            ? 'bg-amber-500/25 border-amber-400 text-amber-300 shadow-amber-500/30 shadow-lg animate-pulse ring-2 ring-amber-400/50'
+            : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-500'
+        }`}
       >
-        <Sun className="w-4 h-4 text-amber-500" />
+        <Sun className="w-4 h-4 text-amber-400" />
         <span>☀️ {sim.dayScenarioLabel || 'Escenario Día'}</span>
       </button>
 
       <button
         onClick={triggerNightMode}
-        className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer ${
+          activeScenario === 'night'
+            ? 'bg-purple-500/25 border-purple-400 text-purple-300 shadow-purple-500/30 shadow-lg animate-pulse ring-2 ring-purple-400/50'
+            : 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30 text-purple-400'
+        }`}
       >
         <Moon className="w-4 h-4 text-purple-400" />
         <span>🌙 {sim.nightScenarioLabel || 'Escenario Noche'}</span>
