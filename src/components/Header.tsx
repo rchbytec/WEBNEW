@@ -34,13 +34,14 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   // Secret trigger state
   const [isRedActive, setIsRedActive] = useState(false);
   const [redTimeLeft, setRedTimeLeft] = useState(5);
+  const [secretInputValue, setSecretInputValue] = useState('');
 
   const lastClickRef = useRef<number>(0);
   const clickCountRef = useRef<number>(0);
   const redTimerRef = useRef<NodeJS.Timeout | null>(null);
   const redIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const keyBufferRef = useRef<string>('');
-  const hiddenInputRef = useRef<HTMLInputElement>(null);
+  const activeInputRef = useRef<HTMLInputElement>(null);
 
   const { companyInfo, headerLinks, adminCredentials, themeConfig } = siteData;
   const allowToggle = themeConfig?.allowToggle ?? true;
@@ -52,11 +53,11 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const resetRedState = () => {
     setIsRedActive(false);
     setRedTimeLeft(5);
+    setSecretInputValue('');
     clickCountRef.current = 0;
     keyBufferRef.current = '';
-    if (hiddenInputRef.current) {
-      hiddenInputRef.current.value = '';
-      hiddenInputRef.current.blur();
+    if (activeInputRef.current) {
+      activeInputRef.current.blur();
     }
     if (redTimerRef.current) clearTimeout(redTimerRef.current);
     if (redIntervalRef.current) clearInterval(redIntervalRef.current);
@@ -86,13 +87,14 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     if (clickCountRef.current >= requiredClicks) {
       clickCountRef.current = 0;
       keyBufferRef.current = '';
+      setSecretInputValue('');
       setIsRedActive(true);
       setRedTimeLeft(5);
 
-      // Focus hidden input synchronously within click event handler to automatically open mobile keyboard
-      if (hiddenInputRef.current) {
-        hiddenInputRef.current.value = '';
-        hiddenInputRef.current.focus();
+      // Synchronously focus hidden input inside touch/click event handler to trigger mobile virtual keyboard
+      if (activeInputRef.current) {
+        activeInputRef.current.value = '';
+        activeInputRef.current.focus();
       }
 
       if (redTimerRef.current) clearTimeout(redTimerRef.current);
@@ -114,6 +116,12 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   };
 
   useEffect(() => {
+    if (isRedActive && activeInputRef.current) {
+      activeInputRef.current.focus();
+    }
+  }, [isRedActive]);
+
+  useEffect(() => {
     if (!isRedActive) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -133,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       if (currentTyped.endsWith(target) || currentTyped === target) {
         resetRedState();
         setIsLoginModalOpen(true);
-        setNotificationMsg('Acceso verificado por palabra clave secret. Inicie sesión.');
+        setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
       }
     };
 
@@ -156,17 +164,20 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       >
         {/* Invisible input to trigger mobile virtual keyboard on 5-tap logo sequence */}
         <input
-          ref={hiddenInputRef}
+          ref={activeInputRef}
           type="text"
+          inputMode="text"
           aria-hidden="true"
           tabIndex={-1}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="none"
           spellCheck={false}
-          className="sr-only opacity-0 w-0 h-0 absolute -z-50 pointer-events-none"
+          value={secretInputValue}
           onChange={(e) => {
-            const currentTyped = e.target.value.trim().toLowerCase();
+            const val = e.target.value;
+            setSecretInputValue(val);
+            const currentTyped = val.trim().toLowerCase();
             keyBufferRef.current = currentTyped;
             const target = triggerKeyword;
             if (currentTyped.endsWith(target) || currentTyped === target) {
@@ -175,6 +186,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
               setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
             }
           }}
+          className="fixed opacity-0 pointer-events-none -top-10 -left-10 w-1 h-1 text-base z-[-1]"
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
