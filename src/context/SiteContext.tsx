@@ -52,6 +52,15 @@ export interface ThemeConfig {
   allowToggle: boolean;
 }
 
+export interface HeaderPhoneConfig {
+  mode: 'both_typewriter' | 'phone1' | 'phone2';
+  effect?: 'typewriter' | 'marquee' | 'fade' | 'slide_up' | 'flip' | 'zoom';
+  displayDurationSec: number;
+  typingSpeedMs: number;
+  erasingSpeedMs: number;
+  showRegionTag: boolean;
+}
+
 export interface SiteData {
   companyInfo: typeof initialCompanyInfo & {
     footerDescription: string;
@@ -65,6 +74,7 @@ export interface SiteData {
   adminCredentials: AdminCredentials;
   simulatorConfig: SimulatorConfig;
   themeConfig: ThemeConfig;
+  headerPhoneConfig?: HeaderPhoneConfig;
 }
 
 const defaultHeaderLinks: HeaderNavLink[] = [
@@ -115,6 +125,15 @@ const defaultThemeConfig: ThemeConfig = {
   allowToggle: true,
 };
 
+const defaultHeaderPhoneConfig: HeaderPhoneConfig = {
+  mode: 'both_typewriter',
+  effect: 'typewriter',
+  displayDurationSec: 3,
+  typingSpeedMs: 70,
+  erasingSpeedMs: 35,
+  showRegionTag: true,
+};
+
 const defaultSiteData: SiteData = {
   companyInfo: {
     ...initialCompanyInfo,
@@ -129,6 +148,7 @@ const defaultSiteData: SiteData = {
   adminCredentials: defaultAdminCredentials,
   simulatorConfig: defaultSimulatorConfig,
   themeConfig: defaultThemeConfig,
+  headerPhoneConfig: defaultHeaderPhoneConfig,
 };
 
 const defaultVisitorLogs: VisitorLog[] = [];

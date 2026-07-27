@@ -11,6 +11,225 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+interface TypewriterPhoneProps {
+  companyInfo: any;
+  headerPhoneConfig: any;
+  darkMode: boolean;
+  isMobile?: boolean;
+}
+
+const TypewriterPhone: React.FC<TypewriterPhoneProps> = ({
+  companyInfo,
+  headerPhoneConfig,
+  darkMode,
+  isMobile = false
+}) => {
+  const phoneConfig = headerPhoneConfig || {
+    mode: 'both_typewriter',
+    effect: 'typewriter',
+    displayDurationSec: 3,
+    typingSpeedMs: 70,
+    erasingSpeedMs: 35,
+  };
+
+  const effect = phoneConfig.effect || 'typewriter';
+
+  const items = React.useMemo(() => {
+    const list: Array<{ text: string; cleanPhone: string }> = [];
+    const mode = phoneConfig.mode || 'both_typewriter';
+
+    if (companyInfo?.phoneNeuquen && (mode === 'both_typewriter' || mode === 'phone1')) {
+      list.push({
+        text: companyInfo.phoneNeuquen,
+        cleanPhone: companyInfo.phoneNeuquenClean || '542994631278'
+      });
+    }
+    if (companyInfo?.phoneBsAs && (mode === 'both_typewriter' || mode === 'phone2')) {
+      list.push({
+        text: companyInfo.phoneBsAs,
+        cleanPhone: companyInfo.phoneBsAsClean || '541158249102'
+      });
+    }
+
+    if (list.length === 0) {
+      list.push({
+        text: companyInfo?.phoneNeuquen || '+54 299 463-1278',
+        cleanPhone: companyInfo?.phoneNeuquenClean || '542994631278'
+      });
+    }
+    return list;
+  }, [companyInfo?.phoneNeuquen, companyInfo?.phoneBsAs, companyInfo?.phoneNeuquenClean, companyInfo?.phoneBsAsClean, phoneConfig.mode]);
+
+  const [itemIndex, setItemIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState('');
+  const [phase, setPhase] = useState<'typing' | 'holding' | 'erasing'>('typing');
+
+  const currentItem = items[itemIndex % items.length] || items[0];
+
+  // Typewriter effect state machine
+  useEffect(() => {
+    if (effect !== 'typewriter') return;
+    if (!items || items.length === 0) return;
+
+    const fullText = currentItem.text;
+    let timer: NodeJS.Timeout;
+
+    if (phase === 'typing') {
+      if (displayedText.length < fullText.length) {
+        timer = setTimeout(() => {
+          setDisplayedText(fullText.slice(0, displayedText.length + 1));
+        }, phoneConfig.typingSpeedMs ?? 70);
+      } else {
+        timer = setTimeout(() => {
+          if (items.length > 1 && phoneConfig.mode === 'both_typewriter') {
+            setPhase('erasing');
+          }
+        }, (phoneConfig.displayDurationSec ?? 3) * 1000);
+      }
+    } else if (phase === 'erasing') {
+      if (displayedText.length > 0) {
+        timer = setTimeout(() => {
+          setDisplayedText(fullText.slice(0, displayedText.length - 1));
+        }, phoneConfig.erasingSpeedMs ?? 35);
+      } else {
+        setItemIndex((prev) => (prev + 1) % items.length);
+        setPhase('typing');
+      }
+    }
+
+    return () => clearTimeout(timer);
+  }, [effect, displayedText, phase, itemIndex, items, currentItem.text, phoneConfig.typingSpeedMs, phoneConfig.erasingSpeedMs, phoneConfig.displayDurationSec, phoneConfig.mode]);
+
+  // Rotational timer for other effects (marquee, fade, slide_up, flip, zoom)
+  useEffect(() => {
+    if (effect === 'typewriter') return;
+    if (items.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setItemIndex((prev) => (prev + 1) % items.length);
+    }, (phoneConfig.displayDurationSec ?? 3) * 1000);
+
+    return () => clearInterval(interval);
+  }, [effect, items.length, phoneConfig.displayDurationSec]);
+
+  useEffect(() => {
+    setItemIndex(0);
+    setDisplayedText('');
+    setPhase('typing');
+  }, [phoneConfig.mode, effect, items.length]);
+
+  const whatsappHref = `https://wa.me/${currentItem.cleanPhone}?text=${encodeURIComponent('Hola RCH-BYTEC, quisiera realizar una consulta técnica.')}`;
+
+  const renderEffectContent = () => {
+    if (effect === 'typewriter') {
+      return (
+        <span className="font-mono tracking-tight text-xs inline-block w-[106px] text-left whitespace-nowrap overflow-hidden">
+          {displayedText}
+          <span className="animate-pulse text-emerald-500 font-bold ml-0.5">|</span>
+        </span>
+      );
+    }
+
+    if (effect === 'marquee') {
+      return (
+        <div className="w-[106px] overflow-hidden whitespace-nowrap relative flex items-center">
+          <motion.div
+            key={itemIndex}
+            initial={{ x: '100%' }}
+            animate={{ x: '-100%' }}
+            transition={{
+              repeat: Infinity,
+              duration: Math.max(3, (phoneConfig.displayDurationSec ?? 3) * 1.5),
+              ease: 'linear'
+            }}
+            className="font-mono tracking-tight text-xs inline-block whitespace-nowrap text-emerald-400"
+          >
+            {currentItem.text}
+          </motion.div>
+        </div>
+      );
+    }
+
+    const transitionProps = {
+      fade: {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        transition: { duration: 0.35 }
+      },
+      slide_up: {
+        initial: { y: 10, opacity: 0 },
+        animate: { y: 0, opacity: 1 },
+        exit: { y: -10, opacity: 0 },
+        transition: { duration: 0.3 }
+      },
+      flip: {
+        initial: { rotateX: 90, opacity: 0 },
+        animate: { rotateX: 0, opacity: 1 },
+        exit: { rotateX: -90, opacity: 0 },
+        transition: { duration: 0.35 }
+      },
+      zoom: {
+        initial: { scale: 0.7, opacity: 0 },
+        animate: { scale: 1, opacity: 1 },
+        exit: { scale: 1.15, opacity: 0 },
+        transition: { duration: 0.3 }
+      }
+    };
+
+    const currentProps = transitionProps[effect as keyof typeof transitionProps] || transitionProps.fade;
+
+    return (
+      <div className="w-[106px] h-[18px] relative overflow-hidden flex items-center justify-start">
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={itemIndex}
+            {...currentProps}
+            className="font-mono tracking-tight text-xs inline-block whitespace-nowrap absolute left-0"
+          >
+            {currentItem.text}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+    );
+  };
+
+  if (isMobile) {
+    return (
+      <a
+        href={whatsappHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`w-full py-2 px-3 rounded-lg text-center text-xs font-semibold border flex items-center justify-center gap-2 ${
+          darkMode
+            ? 'bg-zinc-900 border-zinc-700 text-zinc-200'
+            : 'bg-zinc-100 border-zinc-300 text-zinc-800'
+        }`}
+      >
+        <PhoneCall className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+        {renderEffectContent()}
+      </a>
+    );
+  }
+
+  return (
+    <a
+      href={whatsappHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+        darkMode
+          ? 'bg-zinc-900 text-zinc-200 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-500'
+          : 'bg-zinc-100 text-zinc-800 border-zinc-300 hover:bg-zinc-200'
+      }`}
+      title="Contactar directamente por WhatsApp"
+    >
+      <PhoneCall className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+      {renderEffectContent()}
+    </a>
+  );
+};
+
 interface HeaderProps {
   darkMode: boolean;
   setDarkMode: (val: boolean) => void;
@@ -45,7 +264,7 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
   const keyBufferRef = useRef<string>('');
   const activeInputRef = useRef<HTMLInputElement>(null);
 
-  const { companyInfo, headerLinks, adminCredentials, themeConfig } = siteData;
+  const { companyInfo, headerLinks, adminCredentials, themeConfig, headerPhoneConfig } = siteData;
   const allowToggle = themeConfig?.allowToggle ?? true;
 
   const requiredClicks = adminCredentials?.requiredClicks ?? 5;
@@ -320,20 +539,11 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
               )}
 
               {/* WhatsApp / Call quick action */}
-              <a
-                href={`https://wa.me/${companyInfo.phoneNeuquenClean || '542994631278'}?text=${encodeURIComponent('Hola RCH-BYTEC, quisiera realizar una consulta técnica.')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                  darkMode
-                    ? 'bg-zinc-900 text-zinc-200 border-zinc-700 hover:bg-zinc-800 hover:border-zinc-500'
-                    : 'bg-zinc-100 text-zinc-800 border-zinc-300 hover:bg-zinc-200'
-                }`}
-                title="Contactar directamente por WhatsApp"
-              >
-                <PhoneCall className="w-3.5 h-3.5 text-emerald-500" />
-                <span>{companyInfo.phoneNeuquen}</span>
-              </a>
+              <TypewriterPhone
+                companyInfo={companyInfo}
+                headerPhoneConfig={headerPhoneConfig}
+                darkMode={darkMode}
+              />
 
               {/* Dark / Light Toggle (Hidden if theme is fixed by Admin) */}
               {allowToggle && (
@@ -401,17 +611,12 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
               ))}
 
               <div className="pt-3 border-t border-zinc-800/50 flex flex-col gap-2">
-                <a
-                  href={`tel:${companyInfo.phoneNeuquenClean}`}
-                  className={`w-full py-2.5 px-4 rounded-lg text-center text-xs font-semibold border flex items-center justify-center gap-2 ${
-                    darkMode
-                      ? 'bg-zinc-900 border-zinc-700 text-zinc-200'
-                      : 'bg-zinc-100 border-zinc-300 text-zinc-800'
-                  }`}
-                >
-                  <PhoneCall className="w-4 h-4 text-emerald-500" />
-                  Neuquén: {companyInfo.phoneNeuquen}
-                </a>
+                <TypewriterPhone
+                  companyInfo={companyInfo}
+                  headerPhoneConfig={headerPhoneConfig}
+                  darkMode={darkMode}
+                  isMobile
+                />
               </div>
             </div>
           </motion.div>

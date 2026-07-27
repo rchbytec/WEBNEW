@@ -233,6 +233,16 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
         allowToggle: true,
         ...(siteData?.themeConfig || {}),
         ...(data?.themeConfig || {})
+      },
+      headerPhoneConfig: {
+        mode: 'both_typewriter',
+        effect: 'typewriter',
+        displayDurationSec: 3,
+        typingSpeedMs: 70,
+        erasingSpeedMs: 35,
+        showRegionTag: true,
+        ...(siteData?.headerPhoneConfig || {}),
+        ...(data?.headerPhoneConfig || {})
       }
     };
   }, [siteData]);
@@ -850,6 +860,145 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                         }}
                         className={`w-full px-3.5 py-2 rounded-lg border text-sm ${darkMode ? 'bg-zinc-900 border-zinc-800' : 'bg-zinc-50 border-zinc-300'}`}
                       />
+                    </div>
+
+                    {/* CONFIGURACIÓN MÁQUINA DE ESCRIBIR / ROTACIÓN DE TELÉFONOS */}
+                    <div className={`p-4 rounded-xl border space-y-3 ${
+                      darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-100 border-zinc-300'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <Smartphone className="w-4 h-4 text-emerald-500" />
+                        <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500">
+                          Rotación de Teléfonos en Encabezado (Efecto Máquina de Escribir)
+                        </h4>
+                      </div>
+                      <p className="text-[11px] text-zinc-400">
+                        Al activar la rotación, los números de contacto se escribirán carácter por carácter, permanecerán visibles el tiempo configurado y luego se borrarán rápido para escribir el otro.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        {/* MODO MOSTRAR */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Modo de Visualización</label>
+                          <select
+                            value={formData.headerPhoneConfig?.mode || 'both_typewriter'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              headerPhoneConfig: {
+                                ...formData.headerPhoneConfig,
+                                mode: e.target.value as any
+                              }
+                            })}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'
+                            }`}
+                          >
+                            <option value="both_typewriter">Ambos (Alternar rotación)</option>
+                            <option value="phone1">Solo Teléfono 1 (Neuquén)</option>
+                            <option value="phone2">Solo Teléfono 2 (Buenos Aires)</option>
+                          </select>
+                        </div>
+
+                        {/* EFECTO DE ANIMACIÓN */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1">Efecto de Animación / Transición</label>
+                          <select
+                            value={formData.headerPhoneConfig?.effect || 'typewriter'}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              headerPhoneConfig: {
+                                ...formData.headerPhoneConfig,
+                                effect: e.target.value as any
+                              }
+                            })}
+                            className={`w-full px-3 py-2 rounded-lg border text-xs font-medium ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'
+                            }`}
+                          >
+                            <option value="typewriter">⌨️ Máquina de Escribir (Escribe & Borra)</option>
+                            <option value="marquee">📜 Marquesina (Scroll Continuo)</option>
+                            <option value="fade">✨ Fade In / Fade Out (Disolución)</option>
+                            <option value="slide_up">↕️ Desplazamiento Vertical (Slide Up/Down)</option>
+                            <option value="flip">🔄 Giro 3D (Flip Horizontal)</option>
+                            <option value="zoom">🔍 Zoom In / Zoom Out (Escalado)</option>
+                          </select>
+                        </div>
+
+                        {/* DURACIÓN VISIBLE */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Tiempo Visible (Segundos)</span>
+                            <span className="text-[9px] text-zinc-500">Ej: 3 seg</span>
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={15}
+                            step={0.5}
+                            value={formData.headerPhoneConfig?.displayDurationSec ?? 3}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              headerPhoneConfig: {
+                                ...formData.headerPhoneConfig,
+                                displayDurationSec: Math.max(1, parseFloat(e.target.value) || 3)
+                              }
+                            })}
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                        </div>
+
+                        {/* VELOCIDAD ESCRITURA */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Velocidad Escritura (ms/char)</span>
+                            <span className="text-[9px] text-zinc-500">Ej: 70 ms</span>
+                          </label>
+                          <input
+                            type="number"
+                            min={10}
+                            max={300}
+                            step={5}
+                            value={formData.headerPhoneConfig?.typingSpeedMs ?? 70}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              headerPhoneConfig: {
+                                ...formData.headerPhoneConfig,
+                                typingSpeedMs: Math.max(10, parseInt(e.target.value) || 70)
+                              }
+                            })}
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                        </div>
+
+                        {/* VELOCIDAD BORRADO */}
+                        <div>
+                          <label className="block text-[11px] font-semibold mb-1 flex items-center justify-between">
+                            <span>Velocidad Borrado (ms/char)</span>
+                            <span className="text-[9px] text-zinc-500">Ej: 35 ms</span>
+                          </label>
+                          <input
+                            type="number"
+                            min={5}
+                            max={200}
+                            step={5}
+                            value={formData.headerPhoneConfig?.erasingSpeedMs ?? 35}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              headerPhoneConfig: {
+                                ...formData.headerPhoneConfig,
+                                erasingSpeedMs: Math.max(5, parseInt(e.target.value) || 35)
+                              }
+                            })}
+                            className={`w-full px-3 py-1.5 rounded-lg border text-xs font-mono font-bold ${
+                              darkMode ? 'bg-zinc-950 border-zinc-800' : 'bg-white border-zinc-300'
+                            }`}
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div>
