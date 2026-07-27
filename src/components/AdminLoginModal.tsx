@@ -152,6 +152,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({ darkMode }) =>
                 </label>
                 <input
                   type="email"
+                  autoFocus
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

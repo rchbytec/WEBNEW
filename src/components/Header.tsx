@@ -343,11 +343,13 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       setIsRedActive(true);
       setRedTimeLeft(triggerWindowSeconds);
 
-      // Synchronously focus hidden input inside touch/click event handler to trigger mobile virtual keyboard
-      if (activeInputRef.current) {
-        activeInputRef.current.value = '';
-        activeInputRef.current.focus();
-      }
+      // Focus active input field on trigger window
+      setTimeout(() => {
+        if (activeInputRef.current) {
+          activeInputRef.current.value = '';
+          activeInputRef.current.focus();
+        }
+      }, 50);
 
       if (redTimerRef.current) clearTimeout(redTimerRef.current);
       if (redIntervalRef.current) clearInterval(redIntervalRef.current);
@@ -369,7 +371,10 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
   useEffect(() => {
     if (isRedActive && activeInputRef.current) {
-      activeInputRef.current.focus();
+      const timer = setTimeout(() => {
+        activeInputRef.current?.focus();
+      }, 80);
+      return () => clearTimeout(timer);
     }
   }, [isRedActive]);
 
@@ -405,6 +410,81 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
 
   return (
     <>
+      {/* Floating Secret Trigger Prompt for Mobile and Desktop */}
+      <AnimatePresence>
+        {isRedActive && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-sm p-4 rounded-2xl bg-zinc-950/95 border border-red-500/60 shadow-[0_10px_30px_rgba(239,68,68,0.3)] backdrop-blur-md text-white"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-xs font-bold text-red-400 font-mono">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping inline-block" />
+                <span>ACCESO OCULTO ADMIN ({redTimeLeft}s)</span>
+              </div>
+              <button
+                onClick={resetRedState}
+                type="button"
+                className="text-zinc-400 hover:text-white text-xs p-1 rounded-md hover:bg-zinc-800 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-[11px] text-zinc-400 mb-2">
+              Ingrese la palabra clave para abrir el inicio de sesión:
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const currentTyped = secretInputValue.trim().toLowerCase();
+                if (currentTyped === triggerKeyword || currentTyped.endsWith(triggerKeyword)) {
+                  resetRedState();
+                  setIsLoginModalOpen(true);
+                  setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
+                } else {
+                  setNotificationMsg('Palabra clave incorrecta.');
+                }
+              }}
+              className="flex gap-2"
+            >
+              <input
+                ref={activeInputRef}
+                type="text"
+                autoFocus
+                inputMode="text"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                value={secretInputValue}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSecretInputValue(val);
+                  const currentTyped = val.trim().toLowerCase();
+                  keyBufferRef.current = currentTyped;
+                  if (currentTyped === triggerKeyword || currentTyped.endsWith(triggerKeyword)) {
+                    resetRedState();
+                    setIsLoginModalOpen(true);
+                    setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
+                  }
+                }}
+                placeholder={`Ej: ${triggerKeyword}`}
+                className="w-full px-3 py-2 text-sm rounded-lg bg-zinc-900 border border-zinc-700 text-white placeholder:text-zinc-500 focus:outline-none focus:border-red-500 font-mono"
+              />
+              <button
+                type="submit"
+                className="px-3.5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-lg shrink-0 transition-colors cursor-pointer"
+              >
+                Entrar
+              </button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <header
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           scrolled
@@ -414,39 +494,12 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             : 'bg-transparent py-4'
         }`}
       >
-        {/* Invisible input to trigger mobile virtual keyboard on 5-tap logo sequence */}
-        <input
-          ref={activeInputRef}
-          type="text"
-          inputMode="text"
-          aria-hidden="true"
-          tabIndex={-1}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          value={secretInputValue}
-          onChange={(e) => {
-            const val = e.target.value;
-            setSecretInputValue(val);
-            const currentTyped = val.trim().toLowerCase();
-            keyBufferRef.current = currentTyped;
-            const target = triggerKeyword;
-            if (currentTyped.endsWith(target) || currentTyped === target) {
-              resetRedState();
-              setIsLoginModalOpen(true);
-              setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
-            }
-          }}
-          className="fixed opacity-0 pointer-events-none -top-10 -left-10 w-1 h-1 text-base z-[-1]"
-        />
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Logo with customizable secret trigger */}
             <div 
               onClick={handleLogoClick}
-              className={`flex items-center gap-2.5 group cursor-pointer select-none transition-all duration-300 ${
+              className={`flex items-center gap-2.5 group cursor-pointer select-none touch-manipulation transition-all duration-300 ${
                 isResetGlow ? 'scale-105 p-1 rounded-xl bg-emerald-500/10 ring-2 ring-emerald-500/50' : isRedActive ? 'scale-105' : ''
               }`}
               title={companyInfo.fullName || 'RCH-BYTEC SRL'}
