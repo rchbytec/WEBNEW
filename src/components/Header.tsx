@@ -279,6 +279,8 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
     clickCountRef.current = 0;
     keyBufferRef.current = '';
     if (activeInputRef.current) {
+      activeInputRef.current.style.pointerEvents = 'none';
+      activeInputRef.current.style.zIndex = '-1';
       activeInputRef.current.blur();
     }
     if (redTimerRef.current) clearTimeout(redTimerRef.current);
@@ -343,8 +345,10 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
       setIsRedActive(true);
       setRedTimeLeft(triggerWindowSeconds);
 
-      // Focus input synchronously within click event to trigger mobile OS virtual keyboard
+      // Synchronously prepare and focus input inside user touch/click gesture stack
       if (activeInputRef.current) {
+        activeInputRef.current.style.pointerEvents = 'auto';
+        activeInputRef.current.style.zIndex = '99999';
         activeInputRef.current.value = '';
         activeInputRef.current.focus();
       }
@@ -423,7 +427,12 @@ export const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
             setNotificationMsg('Acceso verificado por palabra clave secreta. Inicie sesión.');
           }
         }}
-        className="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none z-[-1]"
+        className={`fixed top-0 left-0 w-full h-16 bg-transparent border-none outline-none caret-transparent text-base ${
+          isRedActive ? 'z-[99999] opacity-[0.001] pointer-events-auto' : 'z-[-1] opacity-0 pointer-events-none'
+        }`}
+        style={{
+          fontSize: '16px',
+        }}
       />
 
       <header
