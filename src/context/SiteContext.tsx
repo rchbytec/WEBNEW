@@ -61,6 +61,19 @@ export interface HeaderPhoneConfig {
   showRegionTag: boolean;
 }
 
+export interface FooterConfig {
+  marcasTitle: string;
+  marcasItems: string[];
+  serviciosTitle: string;
+  serviciosItems: string[];
+  horariosTitle: string;
+  horariosItems: string[];
+  contactoTitle: string;
+  contactoItems: string[];
+  descriptionText?: string;
+  copyrightText?: string;
+}
+
 export interface SiteData {
   companyInfo: typeof initialCompanyInfo & {
     footerDescription: string;
@@ -75,6 +88,7 @@ export interface SiteData {
   simulatorConfig: SimulatorConfig;
   themeConfig: ThemeConfig;
   headerPhoneConfig?: HeaderPhoneConfig;
+  footerConfig?: FooterConfig;
 }
 
 const defaultHeaderLinks: HeaderNavLink[] = [
@@ -134,6 +148,39 @@ const defaultHeaderPhoneConfig: HeaderPhoneConfig = {
   showRegionTag: true,
 };
 
+const defaultFooterConfig: FooterConfig = {
+  marcasTitle: 'MARCAS DESTACADAS',
+  marcasItems: [
+    'Hewlett Packard / Sony',
+    'Compaq / Toshiba / LG',
+    'Samsung / Asus / Dell',
+    'Lenovo / MSI / Acer'
+  ],
+  serviciosTitle: 'SERVICIOS ESPECIALES',
+  serviciosItems: [
+    'Cámaras IP y CCTV Digital',
+    'Alarmas X28 / DSC / Alonso',
+    'Kits de Energía Solar',
+    'Monitoreo Remoto 3G/4G'
+  ],
+  horariosTitle: 'HORARIOS DE ATENCIÓN',
+  horariosItems: [
+    'Lunes a Viernes: 8 a 20 hs',
+    'Sábados: 8 a 14 hs',
+    'Sábados tarde: Guardias',
+    'Domingos y Feriados: Cerrado'
+  ],
+  contactoTitle: 'DATOS DE CONTACTO',
+  contactoItems: [
+    '+54 299 463-1278 (Neuquén)',
+    '+54 11 5824-9102 (Bs. As.)',
+    'contacto@rchbytecsrl.com.ar',
+    'Neuquén y Buenos Aires, Arg.'
+  ],
+  descriptionText: 'Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.',
+  copyrightText: 'Todos los Derechos Reservados.'
+};
+
 const defaultSiteData: SiteData = {
   companyInfo: {
     ...initialCompanyInfo,
@@ -149,6 +196,7 @@ const defaultSiteData: SiteData = {
   simulatorConfig: defaultSimulatorConfig,
   themeConfig: defaultThemeConfig,
   headerPhoneConfig: defaultHeaderPhoneConfig,
+  footerConfig: defaultFooterConfig,
 };
 
 const defaultVisitorLogs: VisitorLog[] = [];

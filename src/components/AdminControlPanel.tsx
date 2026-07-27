@@ -10,6 +10,7 @@ import {
   RefreshCw, 
   LogOut, 
   LayoutDashboard, 
+  PanelBottom,
   Sliders, 
   Layers, 
   Briefcase, 
@@ -147,7 +148,7 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
     clearVisitorLogs,
   } = useSiteContext();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'visitors' | 'socials' | 'admin'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'header' | 'hero' | 'quick' | 'services' | 'simulator' | 'visitors' | 'socials' | 'admin' | 'footer'>('general');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
 
@@ -243,6 +244,40 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
         showRegionTag: true,
         ...(siteData?.headerPhoneConfig || {}),
         ...(data?.headerPhoneConfig || {})
+      },
+      footerConfig: {
+        marcasTitle: 'MARCAS DESTACADAS',
+        marcasItems: [
+          'Hewlett Packard / Sony',
+          'Compaq / Toshiba / LG',
+          'Samsung / Asus / Dell',
+          'Lenovo / MSI / Acer'
+        ],
+        serviciosTitle: 'SERVICIOS ESPECIALES',
+        serviciosItems: [
+          'Cámaras IP y CCTV Digital',
+          'Alarmas X28 / DSC / Alonso',
+          'Kits de Energía Solar',
+          'Monitoreo Remoto 3G/4G'
+        ],
+        horariosTitle: 'HORARIOS DE ATENCIÓN',
+        horariosItems: [
+          'Lunes a Viernes: 8 a 20 hs',
+          'Sábados: 8 a 14 hs',
+          'Sábados tarde: Guardias',
+          'Domingos y Feriados: Cerrado'
+        ],
+        contactoTitle: 'DATOS DE CONTACTO',
+        contactoItems: [
+          '+54 299 463-1278 (Neuquén)',
+          '+54 11 5824-9102 (Bs. As.)',
+          'contacto@rchbytecsrl.com.ar',
+          'Neuquén y Buenos Aires, Arg.'
+        ],
+        descriptionText: 'Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.',
+        copyrightText: 'Todos los Derechos Reservados.',
+        ...(siteData?.footerConfig || {}),
+        ...(data?.footerConfig || {})
       }
     };
   }, [siteData]);
@@ -591,6 +626,19 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
 
               <button
                 onClick={(e) => {
+                  setActiveTab('footer');
+                  e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap cursor-pointer transition-colors ${
+                  activeTab === 'footer' ? 'bg-emerald-500 text-white shadow-sm' : darkMode ? 'text-zinc-400 hover:bg-zinc-800' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <PanelBottom className="w-3.5 h-3.5 text-amber-400" />
+                <span>Footer</span>
+              </button>
+
+              <button
+                onClick={(e) => {
                   setActiveTab('admin');
                   e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                 }}
@@ -727,6 +775,18 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
               >
                 <MessageSquare className="w-4 h-4" />
                 <span>Redes Sociales</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('footer')}
+                className={`w-full px-3 py-2.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2.5 cursor-pointer ${
+                  activeTab === 'footer'
+                    ? 'bg-emerald-500 text-white shadow-sm'
+                    : darkMode ? 'text-zinc-400 hover:bg-zinc-800/60 hover:text-white' : 'text-zinc-600 hover:bg-zinc-200'
+                }`}
+              >
+                <PanelBottom className="w-4 h-4 text-amber-400" />
+                <span>Footer</span>
               </button>
 
               <button
@@ -2670,6 +2730,417 @@ export const AdminControlPanel: React.FC<AdminControlPanelProps> = ({ darkMode }
                     <p>
                       Al hacer clic en "Guardar y Enviar Notificación por Correo", la nueva contraseña será configurada como activa y se despachará un correo electrónico formal a la nueva dirección ingresada.
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 10: FOOTER CONFIG */}
+              {activeTab === 'footer' && (
+                <div className="space-y-6 max-w-4xl">
+                  <div className="border-b border-zinc-800/40 pb-3">
+                    <h3 className="font-bold text-lg flex items-center gap-2">
+                      <PanelBottom className="w-5 h-5 text-amber-400" />
+                      <span>Configuración del Footer (Pie de Página)</span>
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-1">
+                      Modifique libremente las 4 columnas de información que se muestran en el pie de página de la web: Marcas Destacadas, Servicios Especiales, Horarios de Atención y Datos de Contacto.
+                    </p>
+                  </div>
+
+                  {/* DESCRIPCIÓN BREVE DEL FOOTER */}
+                  <div className={`p-4 rounded-xl border space-y-3 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500 flex items-center gap-1.5">
+                      <span>Texto Descriptivo bajo el Logo</span>
+                    </h4>
+                    <div>
+                      <input
+                        type="text"
+                        value={formData.footerConfig?.descriptionText || ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              descriptionText: e.target.value
+                            }
+                          });
+                        }}
+                        placeholder="Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada."
+                        className={`w-full px-3.5 py-2 rounded-lg border text-xs font-semibold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800 text-white' : 'bg-white border-zinc-300 text-zinc-900'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 1: MARCAS DESTACADAS */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500 flex items-center justify-between">
+                      <span>Columna 1: Marcas Destacadas</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">{(formData.footerConfig?.marcasItems || []).length} Ítems</span>
+                    </h4>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Título de la Columna</label>
+                      <input
+                        type="text"
+                        value={formData.footerConfig?.marcasTitle || ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              marcasTitle: e.target.value
+                            }
+                          });
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800 text-emerald-400' : 'bg-white border-zinc-300 text-emerald-600'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-2">Contenido por Línea</label>
+                      <div className="space-y-2">
+                        {(formData.footerConfig?.marcasItems || []).map((item, idx) => (
+                          <div key={`fc-m-edit-${idx}`} className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-zinc-500 w-6 text-right">#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const updated = [...(formData.footerConfig?.marcasItems || [])];
+                                updated[idx] = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    marcasItems: updated
+                                  }
+                                });
+                              }}
+                              className={`flex-1 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                                darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-emerald-500' : 'bg-white border-zinc-300 text-zinc-900'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (formData.footerConfig?.marcasItems || []).filter((_, i) => i !== idx);
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    marcasItems: updated
+                                  }
+                                });
+                              }}
+                              className="p-1.5 text-red-400 hover:bg-red-500/10 rounded cursor-pointer transition-colors"
+                              title="Eliminar fila"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = formData.footerConfig?.marcasItems || [];
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              marcasItems: [...current, 'Nueva Marca / Fabricante']
+                            }
+                          });
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-all flex items-center gap-1 cursor-pointer mt-3"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Agregar Fila a Marcas</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 2: SERVICIOS ESPECIALES */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500 flex items-center justify-between">
+                      <span>Columna 2: Servicios Especiales</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">{(formData.footerConfig?.serviciosItems || []).length} Ítems</span>
+                    </h4>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Título de la Columna</label>
+                      <input
+                        type="text"
+                        value={formData.footerConfig?.serviciosTitle || ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              serviciosTitle: e.target.value
+                            }
+                          });
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800 text-emerald-400' : 'bg-white border-zinc-300 text-emerald-600'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-2">Contenido por Línea</label>
+                      <div className="space-y-2">
+                        {(formData.footerConfig?.serviciosItems || []).map((item, idx) => (
+                          <div key={`fc-s-edit-${idx}`} className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-zinc-500 w-6 text-right">#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const updated = [...(formData.footerConfig?.serviciosItems || [])];
+                                updated[idx] = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    serviciosItems: updated
+                                  }
+                                });
+                              }}
+                              className={`flex-1 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                                darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-emerald-500' : 'bg-white border-zinc-300 text-zinc-900'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (formData.footerConfig?.serviciosItems || []).filter((_, i) => i !== idx);
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    serviciosItems: updated
+                                  }
+                                });
+                              }}
+                              className="p-1.5 text-red-400 hover:bg-red-500/10 rounded cursor-pointer transition-colors"
+                              title="Eliminar fila"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = formData.footerConfig?.serviciosItems || [];
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              serviciosItems: [...current, 'Nuevo Servicio Especial']
+                            }
+                          });
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-all flex items-center gap-1 cursor-pointer mt-3"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Agregar Fila a Servicios</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 3: HORARIOS DE ATENCIÓN */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500 flex items-center justify-between">
+                      <span>Columna 3: Horarios de Atención</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">{(formData.footerConfig?.horariosItems || []).length} Ítems</span>
+                    </h4>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Título de la Columna</label>
+                      <input
+                        type="text"
+                        value={formData.footerConfig?.horariosTitle || ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              horariosTitle: e.target.value
+                            }
+                          });
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800 text-emerald-400' : 'bg-white border-zinc-300 text-emerald-600'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-2">Contenido por Línea</label>
+                      <div className="space-y-2">
+                        {(formData.footerConfig?.horariosItems || []).map((item, idx) => (
+                          <div key={`fc-h-edit-${idx}`} className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-zinc-500 w-6 text-right">#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const updated = [...(formData.footerConfig?.horariosItems || [])];
+                                updated[idx] = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    horariosItems: updated
+                                  }
+                                });
+                              }}
+                              className={`flex-1 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                                darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-emerald-500' : 'bg-white border-zinc-300 text-zinc-900'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (formData.footerConfig?.horariosItems || []).filter((_, i) => i !== idx);
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    horariosItems: updated
+                                  }
+                                });
+                              }}
+                              className="p-1.5 text-red-400 hover:bg-red-500/10 rounded cursor-pointer transition-colors"
+                              title="Eliminar fila"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = formData.footerConfig?.horariosItems || [];
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              horariosItems: [...current, 'Nuevo Horario de Atención']
+                            }
+                          });
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-all flex items-center gap-1 cursor-pointer mt-3"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Agregar Fila a Horarios</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* COLUMNA 4: DATOS DE CONTACTO */}
+                  <div className={`p-4 rounded-xl border space-y-4 ${
+                    darkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
+                  }`}>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-500 flex items-center justify-between">
+                      <span>Columna 4: Datos de Contacto</span>
+                      <span className="text-[10px] text-zinc-500 font-mono">{(formData.footerConfig?.contactoItems || []).length} Ítems</span>
+                    </h4>
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-1">Título de la Columna</label>
+                      <input
+                        type="text"
+                        value={formData.footerConfig?.contactoTitle || ''}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              contactoTitle: e.target.value
+                            }
+                          });
+                        }}
+                        className={`w-full px-3 py-2 rounded-lg border text-xs font-bold ${
+                          darkMode ? 'bg-zinc-950 border-zinc-800 text-emerald-400' : 'bg-white border-zinc-300 text-emerald-600'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold mb-2">Contenido por Línea</label>
+                      <div className="space-y-2">
+                        {(formData.footerConfig?.contactoItems || []).map((item, idx) => (
+                          <div key={`fc-c-edit-${idx}`} className="flex items-center gap-2">
+                            <span className="text-xs font-mono font-bold text-zinc-500 w-6 text-right">#{idx + 1}</span>
+                            <input
+                              type="text"
+                              value={item}
+                              onChange={(e) => {
+                                const updated = [...(formData.footerConfig?.contactoItems || [])];
+                                updated[idx] = e.target.value;
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    contactoItems: updated
+                                  }
+                                });
+                              }}
+                              className={`flex-1 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                                darkMode ? 'bg-zinc-950 border-zinc-800 text-white focus:border-emerald-500' : 'bg-white border-zinc-300 text-zinc-900'
+                              }`}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = (formData.footerConfig?.contactoItems || []).filter((_, i) => i !== idx);
+                                setFormData({
+                                  ...formData,
+                                  footerConfig: {
+                                    ...formData.footerConfig,
+                                    contactoItems: updated
+                                  }
+                                });
+                              }}
+                              className="p-1.5 text-red-400 hover:bg-red-500/10 rounded cursor-pointer transition-colors"
+                              title="Eliminar fila"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = formData.footerConfig?.contactoItems || [];
+                          setFormData({
+                            ...formData,
+                            footerConfig: {
+                              ...formData.footerConfig,
+                              contactoItems: [...current, 'Nuevo Dato de Contacto']
+                            }
+                          });
+                        }}
+                        className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-all flex items-center gap-1 cursor-pointer mt-3"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Agregar Fila a Contactos</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

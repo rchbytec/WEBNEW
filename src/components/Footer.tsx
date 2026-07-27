@@ -8,7 +8,40 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
   const { siteData, scrollToSection } = useSiteContext();
-  const { companyInfo } = siteData;
+  const { companyInfo, footerConfig } = siteData;
+
+  const fc = footerConfig || {
+    marcasTitle: 'MARCAS DESTACADAS',
+    marcasItems: [
+      'Hewlett Packard / Sony',
+      'Compaq / Toshiba / LG',
+      'Samsung / Asus / Dell',
+      'Lenovo / MSI / Acer'
+    ],
+    serviciosTitle: 'SERVICIOS ESPECIALES',
+    serviciosItems: [
+      'Cámaras IP y CCTV Digital',
+      'Alarmas X28 / DSC / Alonso',
+      'Kits de Energía Solar',
+      'Monitoreo Remoto 3G/4G'
+    ],
+    horariosTitle: 'HORARIOS DE ATENCIÓN',
+    horariosItems: [
+      'Lunes a Viernes: 8 a 20 hs',
+      'Sábados: 8 a 14 hs',
+      'Sábados tarde: Guardias',
+      'Domingos y Feriados: Cerrado'
+    ],
+    contactoTitle: 'DATOS DE CONTACTO',
+    contactoItems: [
+      '+54 299 463-1278 (Neuquén)',
+      '+54 11 5824-9102 (Bs. As.)',
+      'contacto@rchbytecsrl.com.ar',
+      'Neuquén y Buenos Aires, Arg.'
+    ],
+    descriptionText: 'Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.',
+    copyrightText: 'Todos los Derechos Reservados.'
+  };
 
   const scrollToTop = () => {
     scrollToSection('#inicio');
@@ -37,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
         </a>
 
         <p className={`max-w-xl text-sm mb-10 leading-relaxed ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-          {companyInfo.fullName} — {companyInfo.slogan}. {companyInfo.subtitle}. Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.
+          {companyInfo.fullName} — {companyInfo.slogan}. {companyInfo.subtitle}. {fc.descriptionText || 'Soluciones integrales de energía solar, cámaras de seguridad, alarmas y reparación técnica especializada.'}
         </p>
 
         {/* Four Centered Grid Columns */}
@@ -45,52 +78,48 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
           {/* Column 1: Marcas */}
           <div className="flex flex-col items-center">
             <h4 className={`font-bold text-xs uppercase tracking-widest mb-3 font-mono ${darkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-              MARCAS DESTACADAS
+              {fc.marcasTitle || 'MARCAS DESTACADAS'}
             </h4>
             <ul className={`space-y-1.5 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              <li>Hewlett Packard / Sony</li>
-              <li>Compaq / Toshiba / LG</li>
-              <li>Samsung / Asus / Dell</li>
-              <li>Lenovo / MSI / Acer</li>
+              {(fc.marcasItems || []).map((item, idx) => (
+                <li key={`fc-m-${idx}`}>{item}</li>
+              ))}
             </ul>
           </div>
 
           {/* Column 2: Servicios */}
           <div className="flex flex-col items-center">
             <h4 className={`font-bold text-xs uppercase tracking-widest mb-3 font-mono ${darkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-              SERVICIOS ESPECIALES
+              {fc.serviciosTitle || 'SERVICIOS ESPECIALES'}
             </h4>
             <ul className={`space-y-1.5 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              <li>Cámaras IP y CCTV Digital</li>
-              <li>Alarmas X28 / DSC / Alonso</li>
-              <li>Kits de Energía Solar</li>
-              <li>Monitoreo Remoto 3G/4G</li>
+              {(fc.serviciosItems || []).map((item, idx) => (
+                <li key={`fc-s-${idx}`}>{item}</li>
+              ))}
             </ul>
           </div>
 
           {/* Column 3: Horarios */}
           <div className="flex flex-col items-center">
             <h4 className={`font-bold text-xs uppercase tracking-widest mb-3 font-mono ${darkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-              HORARIOS DE ATENCIÓN
+              {fc.horariosTitle || 'HORARIOS DE ATENCIÓN'}
             </h4>
             <ul className={`space-y-1.5 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              <li>Lunes a Viernes: 8 a 20 hs</li>
-              <li>Sábados: 8 a 14 hs</li>
-              <li>Sábados tarde: Guardias</li>
-              <li>Domingos y Feriados: Cerrado</li>
+              {(fc.horariosItems || []).map((item, idx) => (
+                <li key={`fc-h-${idx}`}>{item}</li>
+              ))}
             </ul>
           </div>
 
           {/* Column 4: Contactos */}
           <div className="flex flex-col items-center">
             <h4 className={`font-bold text-xs uppercase tracking-widest mb-3 font-mono ${darkMode ? 'text-zinc-200' : 'text-zinc-800'}`}>
-              DATOS DE CONTACTO
+              {fc.contactoTitle || 'DATOS DE CONTACTO'}
             </h4>
             <ul className={`space-y-1.5 ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              <li>{companyInfo.phoneNeuquen} (Neuquén)</li>
-              <li>{companyInfo.phoneBsAs} (Bs. As.)</li>
-              <li>{companyInfo.email}</li>
-              <li>Neuquén y Buenos Aires, Arg.</li>
+              {(fc.contactoItems || []).map((item, idx) => (
+                <li key={`fc-c-${idx}`}>{item}</li>
+              ))}
             </ul>
           </div>
         </div>
